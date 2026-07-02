@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'HMA Tracker',
-        short_name: 'HMA',
+        name: 'HMA Cadence',
+        short_name: 'Cadence',
         description: 'Track your corrective exercise program',
         theme_color: '#0e0e0e',
         background_color: '#0a0a0a',
