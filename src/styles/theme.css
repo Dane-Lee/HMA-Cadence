@@ -39,8 +39,8 @@
   --cat-lunge: #e03030;
   --cat-single-leg-dip: #f0851e;
   --cat-shoulder-reach: #2471a3;
-  --cat-torso-rotation: #6f42c1;
-  --cat-circle-rotation: #2e7d32;
+  --cat-trunk-rotation: #6f42c1;
+  --cat-cervical-rotation: #2e7d32;
 
   /* Exercise type accents */
   --type-stretch: #4a9fe0;
@@ -94,8 +94,8 @@
   --cat-lunge: #e03030;
   --cat-single-leg-dip: #f0851e;
   --cat-shoulder-reach: #4a9fe0;
-  --cat-torso-rotation: #9d6fdf;
-  --cat-circle-rotation: #4caf50;
+  --cat-trunk-rotation: #9d6fdf;
+  --cat-cervical-rotation: #4caf50;
 
   --type-stretch: #4a9fe0;
   --type-stability: #f0851e;

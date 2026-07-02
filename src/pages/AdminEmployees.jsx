@@ -68,7 +68,7 @@ export default function AdminEmployees() {
                   {e.program ? (
                     <>
                       <span>{e.program.days_per_week}× / week</span>
-                      <span>This week: {e.sessionsThisWeek} / {e.daysPerWeek ?? e.program.days_per_week}</span>
+                      <span>This week: {e.completedInstances} / {e.scheduledInstances} exercises</span>
                       {e.program.follow_up_date && (
                         <span className={`employee-card__chip ${followUpOverdue ? 'danger' : followUpSoon ? 'warn' : ''}`}>
                           Follow-up {formatDate(e.program.follow_up_date)}

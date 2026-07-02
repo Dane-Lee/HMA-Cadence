@@ -193,7 +193,7 @@ export default function EmployeeToday() {
                   <div className="exercise-card__name">{a.name}</div>
                   <div className="exercise-card__meta">
                     <span className="exercise-card__type-pill">{a.exercise_type}</span>
-                    <span>{a.sets} × {a.reps}</span>
+                    <span>{a.prescription}</span>
                   </div>
                 </div>
 

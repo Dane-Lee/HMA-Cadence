@@ -24,10 +24,11 @@ export async function fetchActiveProgram(employeeId) {
   const { data: assignments, error: aErr } = await supabase
     .from('exercise_assignments')
     .select(`
-      id, sets_override, reps_override, sort_order,
+      id, prescription_override, days, sort_order,
       exercise:exercise_library_id (
-        id, name, description, default_sets, default_reps,
-        movement_category, exercise_type, image_url
+        id, source_exercise_id, name, description, default_prescription,
+        default_duration_sec, movement_category, exercise_type,
+        image_filename, image_url
       )
     `)
     .eq('program_id', program.id)
@@ -39,8 +40,10 @@ export async function fetchActiveProgram(employeeId) {
     ...program,
     assignments: (assignments ?? []).map((a) => ({
       assignmentId: a.id,
-      sets: a.sets_override ?? a.exercise.default_sets,
-      reps: a.reps_override ?? a.exercise.default_reps,
+      // verbatim clinical dosage (per-assignment override, else library default)
+      prescription: a.prescription_override ?? a.exercise.default_prescription,
+      days: a.days ?? [],                       // ISO weekdays this exercise is scheduled
+      durationSec: a.exercise.default_duration_sec,
       sortOrder: a.sort_order,
       ...a.exercise,
     })),
@@ -166,7 +169,7 @@ export async function fetchAdminEmployeeList() {
   const [{ data: compliance }, { data: programs }, { data: painCounts }] = await Promise.all([
     supabase
       .from('employee_weekly_compliance')
-      .select('employee_id, sessions_this_week, days_per_week, compliance_pct_this_week')
+      .select('employee_id, scheduled_days, scheduled_instances, completed_instances, compliance_pct_this_week')
       .in('employee_id', ids),
     supabase
       .from('programs')
@@ -190,8 +193,10 @@ export async function fetchAdminEmployeeList() {
   return employees.map((e) => ({
     ...e,
     program: programMap[e.id] ?? null,
-    sessionsThisWeek: complianceMap[e.id]?.sessions_this_week ?? 0,
-    daysPerWeek: complianceMap[e.id]?.days_per_week ?? null,
+    // layered compliance: exercise-instance counts + derived %
+    completedInstances: complianceMap[e.id]?.completed_instances ?? 0,
+    scheduledInstances: complianceMap[e.id]?.scheduled_instances ?? 0,
+    scheduledDays: complianceMap[e.id]?.scheduled_days ?? null,
     compliancePct: complianceMap[e.id]?.compliance_pct_this_week ?? 0,
     unresolvedPainCount: painMap[e.id] ?? 0,
   }));

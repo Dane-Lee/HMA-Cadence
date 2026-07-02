@@ -173,8 +173,13 @@ To receive the payload at full fidelity:
 - replace `sets_override`/`reps_override` with `prescription_override text`.
 - keep `sort_order`.
 
-**compliance view** — revisit: a "session" is now weekday-aware (today's exercises = assignments
-where today's ISO weekday ∈ `days`). Weekly target = count of distinct scheduled weekdays.
+**compliance (layered)** — source of truth is exercise-level completion (`exercise_completions`),
+now made weekday-aware: today's exercises = assignments where today's ISO weekday ∈ `days`.
+Rollups derived from it:
+- **exercise-level (primary):** completed scheduled exercise-instances / total scheduled instances this week.
+- **day-level:** a scheduled weekday is complete when all that day's assignments are done.
+- **week-level:** distinct scheduled weekdays completed / total scheduled weekdays.
+The admin can drill weekly % → per-day → per-exercise adherence. Nothing is aggregated away.
 
 ---
 

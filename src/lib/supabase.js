@@ -19,17 +19,20 @@ export const supabase = createClient(
 );
 
 export const MOVEMENT_CATEGORIES = [
-  { key: 'lunge',             label: 'Lunge',             cssVar: '--cat-lunge' },
-  { key: 'single_leg_dip',    label: 'Single Leg Dip',    cssVar: '--cat-single-leg-dip' },
-  { key: 'shoulder_reach',    label: 'Shoulder Reach',    cssVar: '--cat-shoulder-reach' },
-  { key: 'torso_rotation',    label: 'Torso Rotation',    cssVar: '--cat-torso-rotation' },
-  { key: 'circle_rotation',   label: 'Circle Rotation',   cssVar: '--cat-circle-rotation' },
+  { key: 'lunge',              label: 'Lunge',              cssVar: '--cat-lunge' },
+  { key: 'single_leg_dip',     label: 'Single Leg Dip',     cssVar: '--cat-single-leg-dip' },
+  { key: 'shoulder_reach',     label: 'Shoulder Reach',     cssVar: '--cat-shoulder-reach' },
+  { key: 'trunk_rotation',     label: 'Trunk Rotation',     cssVar: '--cat-trunk-rotation' },
+  { key: 'cervical_rotation',  label: 'Cervical Rotation',  cssVar: '--cat-cervical-rotation' },
 ];
 
+// Matches the Tracker's 5 clinical exercise types (see plan-payload-contract.md §5).
 export const EXERCISE_TYPES = [
-  { key: 'stretch',   label: 'Stretch' },
-  { key: 'stability', label: 'Stability' },
-  { key: 'strength',  label: 'Strength' },
+  { key: 'flexibility',           label: 'Flexibility' },
+  { key: 'mobility',              label: 'Mobility' },
+  { key: 'static_stabilization',  label: 'Static Stabilization' },
+  { key: 'dynamic_stabilization', label: 'Dynamic Stabilization' },
+  { key: 'strength',              label: 'Strength' },
 ];
 
 export const PAIN_CATEGORIES = [
