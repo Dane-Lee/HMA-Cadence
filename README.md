@@ -9,11 +9,37 @@ Employee-facing PWA for tracking corrective exercise compliance at the Hendricks
 
 ---
 
+## Integration with HMA Tracker
+
+Cadence does **not** share a database with the HMA Tracker. The tracker stays a fully
+offline, local-only app (single `index.html`, no cloud backend). The only link between
+the two is a **one-way push**: when the EIS finalizes a corrective exercise program in
+the tracker, the tracker sends one self-contained JSON **plan payload** to a thin intake
+on Cadence's Supabase.
+
+- **Contract:** one stable JSON payload shape (employee identity, program dates/schedule,
+  and the exercises with sets/reps/category/type). Cadence owns expanding it into
+  `programs` + `exercise_assignments`, upserting the exercises into `exercise_library`,
+  and auto-creating the employee account (temp PIN) if needed.
+- **Intake:** a Supabase **Edge Function** (guarded by a shared secret), not direct writes
+  into the normalized tables — so Cadence's schema can evolve without breaking the tracker.
+- **Idempotent:** each plan carries a client-generated `plan_id` (UUID); re-sends upsert
+  rather than duplicate.
+- **Outbox / offline-tolerant:** the tracker queues the push locally and auto-flushes when
+  a connection is available; it never blocks the tracker's core workflow. A subtle
+  indicator on the tracker notes any plan still waiting to sync.
+
+> This supersedes the older "all apps share one Supabase" plan in
+> `memory/project-hma-ecosystem.md` (its Phase 2/3). The tracker is not migrating to
+> Supabase; only Cadence is cloud-backed.
+
+---
+
 ## First-time setup
 
 ### 1. Create a Supabase project
 
-1. Go to https://supabase.com → New project → name it `hma-tracker`.
+1. Go to https://supabase.com → New project → name it `hma-cadence`.
 2. Pick a region close to Ohio (`us-east-1` is fine).
 3. Wait for it to provision (~2 min).
 4. In **Project Settings → API**, copy:
@@ -54,7 +80,7 @@ Open http://localhost:5174.
 ## Project structure
 
 ```
-hma-tracker/
+hma-cadence/
 ├── public/                       # static assets (favicon, PWA icons)
 ├── src/
 │   ├── lib/
@@ -107,9 +133,15 @@ These are the next things to implement. The data layer and types are ready; most
 - [ ] Move PIN verification to a Supabase Edge Function that mints a JWT
 - [ ] Tighten RLS policies to use `auth.jwt() ->> 'employee_id'`
 
+### Integration intake (the tracker → Cadence link)
+- [ ] Define the plan payload JSON contract (shared with HMA Tracker)
+- [ ] Supabase Edge Function intake (validate, auth via shared secret, idempotent on `plan_id`)
+- [ ] Intake expands payload → upsert employee (+ auto temp PIN), upsert `exercise_library`, create/replace active `program` + `exercise_assignments`
+
 ### Admin features
 - [ ] Employee detail page → see their program, recent check-ins, feedback, pain history
-- [ ] Program creation flow: pick employee → select exercises from library → set sets/reps/days → activate
+- [ ] Review pushed programs (primary path: programs arrive from the tracker; admin reviews/adjusts rather than authoring from scratch)
+- [ ] Optional manual program creation flow: pick employee → select exercises from library → set sets/reps/days → activate
 - [ ] Exercise library management (add/edit/upload demo images)
 - [ ] Account creation + PIN reset
 - [ ] Account deactivation toggle
@@ -125,7 +157,7 @@ These are the next things to implement. The data layer and types are ready; most
 - [ ] First-run onboarding flow (set PIN, set reminder time, request push)
 
 ### Infrastructure
-- [ ] Seed exercise library from the existing HMA tracker library (port the data)
+- [ ] Exercise library is populated by the intake (upserted from pushed plans), not a manual one-time port
 - [ ] Offline write queue (cache check-ins, sync on reconnect)
 - [ ] Supabase Edge Function for push notifications (daily reminders, pain alerts to EIS)
 - [ ] Generate real PWA icons (currently the SVG favicon is a placeholder)
@@ -146,5 +178,5 @@ These are the next things to implement. The data layer and types are ready; most
 ## Related memory files
 
 - `memory/project-hma-tracker.md` — Phase 1 spec (employee/admin UX, data model, design decisions)
-- `memory/project-hma-ecosystem.md` — full 7-phase vision (video capture → AI scoring → auto-generated programs → compliance)
+- `memory/project-hma-ecosystem.md` — full 7-phase vision (video capture → AI scoring → auto-generated programs → compliance). **Note:** its Phase 2/3 shared-Supabase integration is superseded — see "Integration with HMA Tracker" above.
 - `memory/project-ati-emr.md` — the sibling EMR app
