@@ -43,7 +43,7 @@ create or replace function apply_plan(payload jsonb)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions   -- 'extensions' so pgcrypto crypt()/gen_salt() resolve
 as $$
 declare
   v_schema_version int  := (payload->>'schema_version')::int;
