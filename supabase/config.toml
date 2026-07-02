@@ -1,0 +1,6 @@
+project_id = "niuwgnjsembrdlpjbsnx"
+
+# The plan-intake endpoint authenticates via its own shared secret
+# (INGEST_SHARED_SECRET), not a Supabase JWT — so skip gateway JWT checks.
+[functions.ingest-plan]
+verify_jwt = false

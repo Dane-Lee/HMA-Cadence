@@ -102,7 +102,8 @@ Idempotent: re-POSTing the same `plan_id` updates in place, never duplicates.
       "instructions": "Lie on a table at 45°…",   // → exercise_library.description
       "movement_category": "lunge",         // MAPPED (see §5) — from EXERCISE_CATEGORY[id]
       "exercise_type": "flexibility",       // MAPPED (see §5) — from EX_TYPE[id]
-      "prescription": "2x30 sec hold each side",   // verbatim dosage
+      "default_prescription": "2x30 sec hold each side",  // library default → exercise_library.default_prescription
+      "prescription_override": null,        // per-employee override (or null) → exercise_assignments.prescription_override
       "duration_sec": 160,                  // EX_DURATION[id] — drives scheduling/compliance
       "days": [1, 2, 3, 4, 5],              // weekdays THIS exercise is scheduled (per-day split)
       "sort_order": 0,
@@ -113,9 +114,10 @@ Idempotent: re-POSTing the same `plan_id` updates in place, never duplicates.
 }
 ```
 
-`prescription` and `days` are **per-assignment** (may be overridden for this employee);
-`name`, `instructions`, `movement_category`, `exercise_type`, `image_ref`, `duration_sec`
-are **library-level** defaults for that `source_exercise_id`.
+`prescription_override` and `days` are **per-assignment** (specific to this employee's program);
+`default_prescription`, `name`, `instructions`, `movement_category`, `exercise_type`,
+`image_ref`, `duration_sec` are **library-level** defaults for that `source_exercise_id`.
+The effective dosage an employee sees = `prescription_override ?? default_prescription`.
 
 ---
 
