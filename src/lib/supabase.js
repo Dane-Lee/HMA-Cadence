@@ -1,0 +1,40 @@
+import { createClient } from '@supabase/supabase-js';
+
+const url = import.meta.env.VITE_SUPABASE_URL;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!url || !anonKey) {
+  console.warn(
+    '[hma-tracker] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. ' +
+    'Copy .env.example to .env and fill in your Supabase project details.'
+  );
+}
+
+export const supabase = createClient(
+  url ?? 'https://placeholder.supabase.co',
+  anonKey ?? 'placeholder',
+  {
+    auth: { persistSession: false }, // we manage our own session
+  },
+);
+
+export const MOVEMENT_CATEGORIES = [
+  { key: 'lunge',             label: 'Lunge',             cssVar: '--cat-lunge' },
+  { key: 'single_leg_dip',    label: 'Single Leg Dip',    cssVar: '--cat-single-leg-dip' },
+  { key: 'shoulder_reach',    label: 'Shoulder Reach',    cssVar: '--cat-shoulder-reach' },
+  { key: 'torso_rotation',    label: 'Torso Rotation',    cssVar: '--cat-torso-rotation' },
+  { key: 'circle_rotation',   label: 'Circle Rotation',   cssVar: '--cat-circle-rotation' },
+];
+
+export const EXERCISE_TYPES = [
+  { key: 'stretch',   label: 'Stretch' },
+  { key: 'stability', label: 'Stability' },
+  { key: 'strength',  label: 'Strength' },
+];
+
+export const PAIN_CATEGORIES = [
+  { key: 'pain_during',  label: 'Pain during' },
+  { key: 'pain_after',   label: 'Pain after' },
+  { key: 'discomfort',   label: 'Discomfort' },
+  { key: 'other',        label: 'Other' },
+];

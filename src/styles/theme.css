@@ -1,0 +1,241 @@
+/* ─────────────────────────────────────────────────────
+   HMA Tracker — Design System
+   Dark mode default, ATI brand, accessibility-first.
+   ───────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  /* Light mode (default :root) */
+  --bg: #f2f2f2;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-section: #f7f7f8;
+  --bg-hover: #eaeaea;
+  --text: #1a1a1a;
+  --text-secondary: #3a3a3a;
+  --text-muted: #777;
+  --border: #c8c8c8;
+  --border-light: #ddd;
+
+  --accent: #cc0000;
+  --accent-hover: #a80000;
+  --accent-bg: #fce8e8;
+  --accent-text: #b30000;
+
+  --success: #2e7d32;
+  --success-bg: #e8f5e9;
+  --warn: #f0851e;
+  --warn-bg: #fff3e0;
+  --danger: #cc0000;
+  --danger-bg: #fef2f2;
+
+  /* Movement category colors */
+  --cat-lunge: #e03030;
+  --cat-single-leg-dip: #f0851e;
+  --cat-shoulder-reach: #2471a3;
+  --cat-torso-rotation: #6f42c1;
+  --cat-circle-rotation: #2e7d32;
+
+  /* Exercise type accents */
+  --type-stretch: #4a9fe0;
+  --type-stability: #f0851e;
+  --type-strength: #e03030;
+
+  --header-bg: #111111;
+  --header-text: #ffffff;
+
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.08);
+  --shadow-md: 0 3px 12px rgba(0,0,0,.1);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.2);
+  --overlay: rgba(0,0,0,.45);
+
+  /* Sizing — generous for factory workers reading at arm's length */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --tap-min: 48px;       /* min tap target */
+  --tap-comfortable: 56px; /* primary actions */
+
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --bg-card: #161616;
+  --bg-input: #1e1e1e;
+  --bg-section: #1a1a1a;
+  --bg-hover: #252525;
+  --text: #e8e8e8;
+  --text-secondary: #b8b8b8;
+  --text-muted: #888;
+  --border: #333;
+  --border-light: #282828;
+
+  --accent: #e03030;
+  --accent-hover: #f04545;
+  --accent-bg: #2a1212;
+  --accent-text: #f06060;
+
+  --success: #4caf50;
+  --success-bg: #14281a;
+  --warn: #f0851e;
+  --warn-bg: #2a1f10;
+  --danger: #e03030;
+  --danger-bg: #2a1212;
+
+  --cat-lunge: #e03030;
+  --cat-single-leg-dip: #f0851e;
+  --cat-shoulder-reach: #4a9fe0;
+  --cat-torso-rotation: #9d6fdf;
+  --cat-circle-rotation: #4caf50;
+
+  --type-stretch: #4a9fe0;
+  --type-stability: #f0851e;
+  --type-strength: #e03030;
+
+  --header-bg: #0e0e0e;
+  --header-text: #ffffff;
+
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
+  --shadow-md: 0 3px 12px rgba(0,0,0,.5);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.7);
+  --overlay: rgba(0,0,0,.75);
+}
+
+html {
+  font-size: 18px; /* larger base for readability at arm's length */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Utility primitives ── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap-comfortable);
+  padding: 0 24px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background .15s ease, transform .05s ease;
+  width: 100%;
+}
+
+.btn:hover { background: var(--accent-hover); }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--bg-section);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--bg-hover); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  min-height: var(--tap-min);
+  padding: 0 16px;
+}
+.btn-ghost:hover { background: var(--bg-hover); }
+
+.input {
+  width: 100%;
+  min-height: var(--tap-comfortable);
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: border-color .15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.label {
+  display: block;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.muted { color: var(--text-muted); }
+.center { text-align: center; }
+
+.spacer-sm { height: 12px; }
+.spacer-md { height: 24px; }
+.spacer-lg { height: 48px; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
