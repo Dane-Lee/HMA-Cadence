@@ -1,6 +1,6 @@
-# HMA Tracker
+# HMA Cadence
 
-PWA for tracking corrective exercise compliance at the Hendrickson (Navarre, OH) facility. Phase 1 of the larger HMA ecosystem described in `memory/project-hma-ecosystem.md`.
+Employee-facing PWA for tracking corrective exercise compliance at the Hendrickson (Navarre, OH) facility. Receives finished exercise plans pushed from the HMA Tracker (the EIS authoring tool) and is where an employee's program and daily/weekly schedule live once created. Part of the larger HMA ecosystem described in `memory/project-hma-ecosystem.md`.
 
 - **Frontend:** React 19 + Vite 6
 - **Backend:** Supabase (Postgres, Storage, Auth — custom PIN flow)

@@ -1,9 +1,9 @@
 {
-  "name": "hma-tracker",
+  "name": "hma-cadence",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "HMA Corrective Exercise Tracker — Hendrickson Navarre facility",
+  "description": "HMA Cadence — corrective exercise compliance PWA for the Hendrickson Navarre facility",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
