@@ -8,3 +8,6 @@ dist-ssr
 .DS_Store
 .vscode
 .idea
+
+# Supabase CLI local scratch (project link cache, etc.)
+supabase/.temp

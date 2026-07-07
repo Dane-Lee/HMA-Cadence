@@ -49,22 +49,37 @@ export default function EmployeeToday() {
     return s;
   }, [checkIn]);
 
-  const total = program?.assignments?.length ?? 0;
-  const done  = completedSet.size;
+  // Today's exercises = assignments scheduled for today's ISO weekday
+  // (1=Mon … 7=Sun). The intake stores a per-exercise `days` split, and the
+  // DB compliance views only credit completions done on a scheduled weekday
+  // (isodow ∈ days) — so the checklist must show exactly that same set, or the
+  // employee would do work that never counts. Derived from the UTC date to
+  // stay consistent with check_ins.date (also UTC-derived).
+  const isoDow = useMemo(() => {
+    const utcDay = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z').getUTCDay();
+    return ((utcDay + 6) % 7) + 1; // Sun(0)→7, Mon(1)→1 …
+  }, []);
+
+  const todaysAssignments = useMemo(
+    () => (program?.assignments ?? []).filter((a) => (a.days ?? []).includes(isoDow)),
+    [program, isoDow],
+  );
+
+  const total = todaysAssignments.length;
+  const done  = todaysAssignments.filter((a) => completedSet.has(a.assignmentId)).length;
   const allDone = total > 0 && done === total;
 
   // Group by movement category, preserving the category order
   const grouped = useMemo(() => {
-    if (!program?.assignments) return [];
     const byCategory = new Map();
-    for (const a of program.assignments) {
+    for (const a of todaysAssignments) {
       if (!byCategory.has(a.movement_category)) byCategory.set(a.movement_category, []);
       byCategory.get(a.movement_category).push(a);
     }
     return MOVEMENT_CATEGORIES
       .map((cat) => ({ ...cat, items: byCategory.get(cat.key) ?? [] }))
       .filter((g) => g.items.length > 0);
-  }, [program]);
+  }, [todaysAssignments]);
 
   // ── actions ─────────────────────────────────────────────────────
   async function onToggle(assignment) {
@@ -132,6 +147,8 @@ export default function EmployeeToday() {
   // ── render ─────────────────────────────────────────────────────
   if (loading) return <div className="loading">Loading your program…</div>;
 
+  const firstName = employee?.name?.split(' ')[0] ?? '';
+
   if (!program) {
     return (
       <div className="empty-state">
@@ -141,7 +158,16 @@ export default function EmployeeToday() {
     );
   }
 
-  const firstName = employee?.name?.split(' ')[0] ?? '';
+  // Active program, but nothing scheduled for today's weekday → rest day.
+  if (total === 0) {
+    return (
+      <div className="empty-state">
+        <div className="today-greeting" style={{ marginBottom: 12 }}>Hi {firstName} 👋</div>
+        <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>Nothing scheduled today</h2>
+        <p>Enjoy your rest day — your next exercises will be here when they’re due.</p>
+      </div>
+    );
+  }
   const pctDone = total ? Math.round((done / total) * 100) : 0;
 
   return (
