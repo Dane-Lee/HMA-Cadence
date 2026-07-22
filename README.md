@@ -3,9 +3,11 @@
 Employee-facing PWA for tracking corrective exercise compliance at the Hendrickson (Navarre, OH) facility. Receives finished exercise plans pushed from the HMA Tracker (the EIS authoring tool) and is where an employee's program and daily/weekly schedule live once created. Part of the larger HMA ecosystem described in `memory/project-hma-ecosystem.md`.
 
 - **Frontend:** React 19 + Vite 6
-- **Backend:** Supabase (Postgres, Storage, Auth — custom PIN flow)
+- **Data layer:** swappable adapter behind `src/lib/data/` — **default is a local, fictional-data adapter** (in-memory + `localStorage`, no cloud). A future ATI-sanctioned database plugs in as one more adapter.
 - **Routing:** React Router v7
 - **PWA:** `vite-plugin-pwa` (offline shell + image cache)
+
+> **⚠ Compliance (ATI/Hendrickson IT):** **Supabase is prohibited as the database**, and **PHI must never be sent to any AI platform.** Development proceeds against the local test-data adapter only. The prior Supabase implementation is preserved for reference at `src/lib/data/adapters/supabase.js` but is not wired in and is not bundled. See `memory/project-hma-cadence-intake.md`.
 
 ---
 
@@ -37,43 +39,33 @@ on Cadence's Supabase.
 
 ## First-time setup
 
-### 1. Create a Supabase project
-
-1. Go to https://supabase.com → New project → name it `hma-cadence`.
-2. Pick a region close to Ohio (`us-east-1` is fine).
-3. Wait for it to provision (~2 min).
-4. In **Project Settings → API**, copy:
-   - **Project URL** → goes to `VITE_SUPABASE_URL`
-   - **anon public** key → goes to `VITE_SUPABASE_ANON_KEY`
-
-### 2. Set environment variables
-
-```bash
-cp .env.example .env
-```
-
-Fill in the two values from step 1.
-
-### 3. Run the schema migration
-
-In the Supabase dashboard, open **SQL Editor** and run, in order:
-
-1. `supabase/migrations/0001_initial_schema.sql` — creates tables, enums, indexes, RLS, the compliance view, and the storage bucket.
-2. `supabase/migrations/0002_seed_dev_data.sql` — seeds an admin (`ADMIN001` / PIN `1234`) and three sample employees (`4412`, `3287`, `2901`, all PIN `1234`).
-
-> ⚠ The dev PIN check is intentionally permissive — it accepts `1234` for any seeded account. Before going to real users, swap `verifyPin()` in `src/lib/auth.jsx` for `bcryptjs.compareSync()` and hash real PINs.
-
-### 4. Install + run
+No backend, accounts, or environment variables are needed — the app runs entirely on the local fictional-data adapter.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:5174.
+Open http://localhost:5174. The fictional dataset (personas, programs, a week of check-ins) is seeded into `localStorage` on first load.
 
-- Sign in as `ADMIN001` / `1234` → admin view.
-- Sign in as `4412` / `1234` → employee view (Maria has a seeded program).
+- Sign in as `ADMIN001` / `1234` → admin view (employee list with weekly compliance + a pain alert).
+- Sign in as `4412` / `1234` → employee view (Maria Santos has a seeded program).
+- Other seeded employees: `3287` (James Kowalski), `2901` (Tony Reeves). All PINs are `1234`.
+
+> ⚠ The dev PIN check is intentionally permissive — every seeded account accepts `1234`. Auth verification lives in the data adapter (`authenticate()`); a future sanctioned-DB adapter will verify server-side and mint a JWT.
+
+**Reset the demo data:** clear the site's `localStorage`, or call `resetLocalDb()` from `src/lib/data/adapters/localAdapter.js`.
+
+### Data layer / swapping backends
+
+All reads and writes go through `src/lib/data/`:
+
+- `contract.js` — the exact function surface every adapter must implement (argument + return shapes).
+- `index.js` — selects the active adapter and exports it as `db`. Default `local`; override with `VITE_DATA_BACKEND`.
+- `adapters/localAdapter.js` + `localSeed.js` — the default, no-cloud backend.
+- `adapters/supabase.js` — **reference only, not active** (Supabase is prohibited). Kept as the canonical example of the contract for whoever writes the ATI-sanctioned adapter.
+
+Views import query functions from `src/lib/queries.js` (a thin facade over `db`) and never touch a database client directly, so a backend swap needs no page changes.
 
 ---
 
@@ -84,9 +76,16 @@ hma-cadence/
 ├── public/                       # static assets (favicon, PWA icons)
 ├── src/
 │   ├── lib/
-│   │   ├── supabase.js           # client + constants (movement categories, etc.)
-│   │   ├── auth.jsx              # custom PIN auth provider + useAuth hook
-│   │   └── queries.js            # all Supabase reads/writes
+│   │   ├── constants.js          # domain constants (movement categories, etc.)
+│   │   ├── auth.jsx              # PIN auth provider + useAuth hook (session only)
+│   │   ├── queries.js            # facade: re-exports the active adapter's fns
+│   │   └── data/
+│   │       ├── index.js          # selects + exports the active adapter as `db`
+│   │       ├── contract.js       # the data-layer contract (shapes)
+│   │       ├── localSeed.js      # fictional seed dataset
+│   │       └── adapters/
+│   │           ├── localAdapter.js   # default: no-cloud, localStorage
+│   │           └── supabase.js       # reference only, NOT active
 │   ├── pages/
 │   │   ├── Login.jsx
 │   │   ├── EmployeeShell.jsx     # header + main layout for employees

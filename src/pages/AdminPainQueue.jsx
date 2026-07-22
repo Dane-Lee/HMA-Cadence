@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchUnresolvedPainReports } from '../lib/queries.js';
-import { PAIN_CATEGORIES } from '../lib/supabase.js';
+import { PAIN_CATEGORIES } from '../lib/constants.js';
 
 function relTime(iso) {
   const diff = Date.now() - new Date(iso).getTime();

@@ -1,22 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!url || !anonKey) {
-  console.warn(
-    '[hma-cadence] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. ' +
-    'Copy .env.example to .env and fill in your Supabase project details.'
-  );
-}
-
-export const supabase = createClient(
-  url ?? 'https://placeholder.supabase.co',
-  anonKey ?? 'placeholder',
-  {
-    auth: { persistSession: false }, // we manage our own session
-  },
-);
+/**
+ * Domain constants — pure data, no backend dependency.
+ *
+ * These were previously exported from `supabase.js`; they were extracted so
+ * views and the data layer can import them without pulling in any database
+ * client. Keys here are the canonical HMA vocabulary and must stay in lock-step
+ * with the plan payload contract (docs/plan-payload-contract.md) and the SQL
+ * enums (supabase/migrations/0003_integration_fidelity.sql).
+ */
 
 export const MOVEMENT_CATEGORIES = [
   { key: 'lunge',              label: 'Lunge',              cssVar: '--cat-lunge' },

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuth } from '../lib/auth.jsx';
-import { MOVEMENT_CATEGORIES, PAIN_CATEGORIES } from '../lib/supabase.js';
+import { MOVEMENT_CATEGORIES, PAIN_CATEGORIES } from '../lib/constants.js';
 import {
   fetchActiveProgram,
   fetchTodayCheckIn,
