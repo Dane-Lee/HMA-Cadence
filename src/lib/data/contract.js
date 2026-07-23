@@ -12,8 +12,16 @@
  * ── Auth ────────────────────────────────────────────────────────────
  * authenticate(employeeNumber: string, pin: string)
  *   → Promise<Employee>            // { id, employee_number, name, role, active,
- *                                   //   notification_time, notification_enabled }
+ *                                   //   must_change_pin, notification_time,
+ *                                   //   notification_enabled }
+ *   Verifies the PIN against a bcrypt hash; never returns pin_hash.
  *   throws Error('Employee not found' | 'This account is inactive' | 'Incorrect PIN')
+ *
+ * changePin({ employeeId, newPin })
+ *   → Promise<Employee>            // updated employee, must_change_pin=false
+ *   Validates newPin (see ../pin.js), stores a fresh bcrypt hash, and clears
+ *   must_change_pin. Backs the forced first-login PIN-change flow.
+ *   throws Error(<validation reason>)
  *
  * ── Employee-facing ─────────────────────────────────────────────────
  * fetchActiveProgram(employeeId: string)
@@ -50,9 +58,20 @@
  *     PainReport = { id, category, reported_at, acknowledged, resolved,
  *                    employee: { id, name, employee_number },
  *                    assignment: { id, exercise: { id, name, movement_category } } }
+ *
+ * ── Deferred to the sanctioned adapter (NOT buildable on local) ──────
+ * These need the approved backend and are intentionally out of scope until
+ * ATI names one:
+ *   • Server-side PIN verification + short-lived token/JWT minting. The local
+ *     adapter compares bcrypt hashes client-side (fine for fictional data); a
+ *     real backend must never ship pin_hash to the client.
+ *   • Row-level security keyed to the token's employee_id/role claims.
+ *   • Schema: the sanctioned DB needs `employees.must_change_pin boolean`
+ *     (the reference SQL migrations predate this flag).
  */
 export const DATA_LAYER_FUNCTIONS = [
   'authenticate',
+  'changePin',
   'fetchActiveProgram',
   'fetchTodayCheckIn',
   'toggleExerciseComplete',

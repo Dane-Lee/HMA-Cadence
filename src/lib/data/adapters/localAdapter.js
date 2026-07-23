@@ -13,7 +13,9 @@
  * Return shapes here are kept identical to the Supabase reference adapter
  * (./supabase.js) so the two are interchangeable.
  */
+import bcrypt from 'bcryptjs';
 import { buildSeedDb } from '../localSeed.js';
+import { assertValidPin, PIN_COST } from '../pin.js';
 
 const STORAGE_KEY = 'hma-cadence:local-db';
 const DAY_MS = 86_400_000;
@@ -119,16 +121,39 @@ function complianceForProgram(program) {
 // ─────────────────────────────────────────────────────────────────────
 
 /**
- * Verify badge + PIN. Dev-permissive: seeded accounts use PIN "1234".
- * Returns the employee (without the pin) or throws with a user-facing message.
+ * Verify badge + PIN against the stored bcrypt hash. Returns the employee
+ * (without pin_hash) or throws with a user-facing message. Seeded accounts use
+ * PIN "1234"; the new-hire persona (5567) uses temp PIN "0000".
+ *
+ * NOTE: in this local/dev adapter the compare runs client-side, which is fine
+ * for fictional data. The sanctioned-DB adapter must verify server-side and
+ * mint a short-lived token instead of trusting the client (see contract.js).
  */
 export async function authenticate(employeeNumber, pin) {
   const emp = store.employees.find((e) => e.employee_number === employeeNumber.trim());
   if (!emp) throw new Error('Employee not found');
   if (!emp.active) throw new Error('This account is inactive');
-  if (pin !== emp.pin) throw new Error('Incorrect PIN');
+  if (!bcrypt.compareSync(pin, emp.pin_hash)) throw new Error('Incorrect PIN');
 
-  const { pin: _pin, ...safe } = emp;
+  const { pin_hash, ...safe } = emp;
+  return clone(safe);
+}
+
+/**
+ * Set a new PIN and clear the must_change_pin flag. Used by the forced
+ * first-login flow. Validates the PIN, stores a fresh bcrypt hash, and returns
+ * the updated employee (without pin_hash).
+ */
+export async function changePin({ employeeId, newPin }) {
+  assertValidPin(newPin);
+  const emp = store.employees.find((e) => e.id === employeeId);
+  if (!emp) throw new Error('Employee not found');
+
+  emp.pin_hash = bcrypt.hashSync(newPin, PIN_COST);
+  emp.must_change_pin = false;
+  persist();
+
+  const { pin_hash, ...safe } = emp;
   return clone(safe);
 }
 

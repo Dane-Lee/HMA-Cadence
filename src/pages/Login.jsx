@@ -13,8 +13,11 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     try {
-      const result = await signIn(employeeNumber, pin);
-      navigate(result.employee.role === 'admin' ? '/admin' : '/today', { replace: true });
+      const { employee } = await signIn(employeeNumber, pin);
+      const dest = employee.must_change_pin
+        ? '/set-pin'
+        : employee.role === 'admin' ? '/admin' : '/today';
+      navigate(dest, { replace: true });
     } catch (err) {
       setError(err.message ?? 'Could not sign in');
     }

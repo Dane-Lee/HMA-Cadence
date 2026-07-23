@@ -15,6 +15,14 @@
  * weekly-compliance numbers are always meaningful whenever the app is run.
  */
 
+// ── PIN hashes (fictional) ──────────────────────────────────────────
+// bcrypt hashes, cost 10. Precomputed constants (rather than hashing at
+// runtime) so seeding is instant and deterministic — fine for fake PINs.
+//   PIN_HASH_1234 → "1234" (the documented dev PIN for established accounts)
+//   PIN_HASH_TEMP → "0000" (a temp PIN; the account must change it on first login)
+const PIN_HASH_1234 = '$2a$10$.bxSbTf438UzFXFmL/Vl2e9h8/fn8B.vY4a1g.HepSdnkc906EYgS';
+const PIN_HASH_TEMP = '$2a$10$FZ/xTcJsJ58WcNLUoPFQ/.0bvPcbW72XBc63SLCf9YcuJBH.iO826';
+
 // ── date helpers ────────────────────────────────────────────────────
 const DAY_MS = 86_400_000;
 
@@ -143,6 +151,22 @@ const PERSONAS = [
     // Completes every scheduled day so far → high compliance.
     completeWeekdays: [2, 4],
   },
+  {
+    // A freshly-pushed hire: account + program just arrived, PIN still temporary.
+    // Signing in as 5567 / "0000" triggers the forced PIN-change flow, then
+    // lands on a real (as-yet-untouched) program. See tempPin below.
+    employee: { id: 'emp-newhire', employee_number: '5567', name: 'Priya Raman' },
+    tempPin: true,
+    program: { id: 'prog-newhire', work_days: [1, 3, 5], daysAgoAssessed: 1, followUpInDays: 41,
+               assessment_type: 'Initial', total_score: 10 },
+    assignments: [
+      { id: 'asg-newhire-l1',  lib: 'lib-l1',  days: [1, 3, 5], sort_order: 0 },
+      { id: 'asg-newhire-sh4', lib: 'lib-sh4', days: [1, 3, 5], sort_order: 1 },
+      { id: 'asg-newhire-c2',  lib: 'lib-c2',  days: [1, 3, 5], sort_order: 2 },
+    ],
+    // Brand new — nothing done yet (0% is expected for a just-created account).
+    completeWeekdays: [],
+  },
 ];
 
 /**
@@ -164,19 +188,18 @@ export function buildSeedDb(now = new Date()) {
   // Admin (fictional). No health data attached to the admin account.
   db.employees.push({
     id: ADMIN_ID, employee_number: 'ADMIN001', name: 'Dane Lee',
-    pin: '1234', role: 'admin',
+    pin_hash: PIN_HASH_1234, must_change_pin: false, role: 'admin',
     notification_time: '07:00', notification_enabled: true, active: true,
   });
 
-  const nowIso = now.toISOString();
-
   for (const persona of PERSONAS) {
     const { employee, program, assignments, completeWeekdays,
-            partialOnFirstDay, painReports } = persona;
+            partialOnFirstDay, painReports, tempPin } = persona;
 
     db.employees.push({
       id: employee.id, employee_number: employee.employee_number, name: employee.name,
-      pin: '1234', role: 'employee',
+      pin_hash: tempPin ? PIN_HASH_TEMP : PIN_HASH_1234,
+      must_change_pin: tempPin === true, role: 'employee',
       notification_time: '07:00', notification_enabled: true, active: true,
     });
 

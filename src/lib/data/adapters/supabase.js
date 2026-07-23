@@ -16,6 +16,8 @@
  * same return shapes).
  */
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+import { assertValidPin, PIN_COST } from '../pin.js';
 
 // Lazily created so merely importing this reference file never constructs a
 // client or requires env vars.
@@ -35,30 +37,38 @@ function sb() {
 // ─────────────────────────────────────────────────────────────────────
 // Auth
 // ─────────────────────────────────────────────────────────────────────
-const DEV_PIN = '1234';
-
-// Phase-1 client-side PIN check. Before production this must move to a
-// server-side verifier that mints a JWT (see README auth-hardening TODO).
-async function verifyPin(pin /*, pinHash */) {
-  return pin === DEV_PIN; // temporary/permissive
-}
+// NOTE: bcrypt.compareSync is shown here client-side to mirror the local
+// adapter's behavior and keep the contract visible. In a real sanctioned-DB
+// deployment, PIN verification and hashing MUST move server-side (an RPC/edge
+// endpoint) that mints a short-lived token; the client should never receive
+// pin_hash. See contract.js "Deferred to the sanctioned adapter".
 
 export async function authenticate(employeeNumber, pin) {
   const { data, error } = await sb()
     .from('employees')
-    .select('id, employee_number, name, role, pin_hash, active, notification_time, notification_enabled')
+    .select('id, employee_number, name, role, pin_hash, must_change_pin, active, notification_time, notification_enabled')
     .eq('employee_number', employeeNumber.trim())
     .maybeSingle();
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Employee not found');
   if (!data.active) throw new Error('This account is inactive');
-
-  const ok = await verifyPin(pin, data.pin_hash);
-  if (!ok) throw new Error('Incorrect PIN');
+  if (!bcrypt.compareSync(pin, data.pin_hash)) throw new Error('Incorrect PIN');
 
   const { pin_hash, ...employee } = data;
   return employee;
+}
+
+export async function changePin({ employeeId, newPin }) {
+  assertValidPin(newPin);
+  const { data, error } = await sb()
+    .from('employees')
+    .update({ pin_hash: bcrypt.hashSync(newPin, PIN_COST), must_change_pin: false })
+    .eq('id', employeeId)
+    .select('id, employee_number, name, role, must_change_pin, active, notification_time, notification_enabled')
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 // ─────────────────────────────────────────────────────────────────────

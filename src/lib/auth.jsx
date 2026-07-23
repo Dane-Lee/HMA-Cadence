@@ -5,11 +5,13 @@ import { db } from './data/index.js';
  * Custom PIN-based auth.
  *
  * This provider owns only the session (state + localStorage + React context).
- * Credential verification lives in the data layer (`db.authenticate`) so it
- * swaps with the backend — the local adapter is dev-permissive (PIN "1234");
+ * Credential work lives in the data layer (`db.authenticate`, `db.changePin`)
+ * so it swaps with the backend — the local adapter verifies a bcrypt hash;
  * a future sanctioned-DB adapter will verify server-side and mint a JWT.
  *
- * Session is persisted in localStorage as { employee, signedInAt }.
+ * `employee.must_change_pin` drives the forced first-login PIN-change flow
+ * (see <RequireAuth> in App.jsx). Session is persisted in localStorage as
+ * { employee, signedInAt }.
  */
 
 const STORAGE_KEY = 'hma-tracker:session';
@@ -46,15 +48,27 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(() => setSession(null), []);
 
+  // Set a new PIN for the signed-in employee and refresh the session so the
+  // must_change_pin gate clears without a re-login.
+  const changePin = useCallback(async (newPin) => {
+    const employeeId = session?.employee?.id;
+    if (!employeeId) throw new Error('Not signed in');
+    const employee = await db.changePin({ employeeId, newPin });
+    setSession((prev) => (prev ? { ...prev, employee } : prev));
+    return employee;
+  }, [session?.employee?.id]);
+
   const value = {
     session,
     employee: session?.employee ?? null,
     role: session?.employee?.role ?? null,
     isAdmin: session?.employee?.role === 'admin',
     isEmployee: session?.employee?.role === 'employee',
+    mustChangePin: session?.employee?.must_change_pin === true,
     loading,
     signIn,
     signOut,
+    changePin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
