@@ -436,3 +436,102 @@
   font: inherit;
 }
 .employee-card--link:hover { border-color: var(--accent); }
+
+/* ── Admin employee detail ───────────────────────────── */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 4px;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: .95rem;
+}
+.back-link:hover { color: var(--text); }
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detail-section { margin-bottom: 28px; }
+.detail-section__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.detail-summary {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+.detail-compliance { text-align: center; }
+.detail-compliance__pct {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.detail-meta { display: grid; gap: 12px; align-content: center; }
+.detail-meta > div { display: grid; grid-template-columns: 110px 1fr; align-items: baseline; gap: 12px; }
+.detail-meta dt { color: var(--text-muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+.detail-meta dd { color: var(--text); font-size: .95rem; }
+
+@media (max-width: 560px) {
+  .detail-summary { grid-template-columns: 1fr; gap: 18px; }
+}
+
+/* per-exercise adherence rows */
+.adherence-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+.adherence-row__dot { width: 10px; height: 10px; border-radius: 999px; }
+.adherence-row__main { min-width: 0; }
+.adherence-row__name {
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adherence-row__fb { font-size: 1rem; }
+.adherence-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 4px;
+  font-size: .85rem;
+  color: var(--text-secondary);
+}
+.adherence-row__count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--text-muted);
+}
+.adherence-row__count .ok { color: var(--success); }

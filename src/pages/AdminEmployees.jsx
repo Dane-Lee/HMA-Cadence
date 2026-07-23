@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchAdminEmployeeList } from '../lib/queries.js';
 
 function formatDate(d) {
@@ -13,6 +14,7 @@ function daysUntil(date) {
 }
 
 export default function AdminEmployees() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
   const [error, setError] = useState(null);
@@ -58,7 +60,11 @@ export default function AdminEmployees() {
           const followUpOverdue = followUpDays != null && followUpDays < 0;
 
           return (
-            <div key={e.id} className="employee-card">
+            <button
+              key={e.id}
+              className="employee-card employee-card--link"
+              onClick={() => navigate(`/admin/employee/${e.id}`)}
+            >
               <div>
                 <div>
                   <span className="employee-card__name">{e.name}</span>
@@ -94,7 +100,7 @@ export default function AdminEmployees() {
                   <div className="employee-card__bar-fill" style={{ width: `${e.compliancePct}%` }} />
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

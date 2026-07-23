@@ -268,6 +268,72 @@ const PAIN_REPORT_SELECT = `
   )
 `;
 
+export async function fetchAdminEmployeeDetail(employeeId) {
+  const { data: employee, error: eErr } = await sb()
+    .from('employees')
+    .select('id, employee_number, name, active, notification_time, notification_enabled')
+    .eq('id', employeeId)
+    .eq('role', 'employee')
+    .maybeSingle();
+  if (eErr) throw eErr;
+  if (!employee) throw new Error('Employee not found');
+
+  const { data: program } = await sb()
+    .from('programs')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  const { data: compRow } = await sb()
+    .from('employee_weekly_compliance')
+    .select('scheduled_days, scheduled_instances, completed_instances, compliance_pct_this_week')
+    .eq('employee_id', employeeId)
+    .maybeSingle();
+
+  const compliance = {
+    scheduledDays: compRow?.scheduled_days ?? 0,
+    scheduledInstances: compRow?.scheduled_instances ?? 0,
+    completedInstances: compRow?.completed_instances ?? 0,
+    compliancePct: compRow?.compliance_pct_this_week ?? 0,
+  };
+
+  let assignments = [];
+  if (program) {
+    // Per-assignment adherence is derived from the assignment-level weekly view
+    // (one row per assignment with its scheduled/completed instance counts).
+    const { data: rows } = await sb()
+      .from('assignment_weekly_adherence')
+      .select(`
+        assignment_id, scheduled_count, completed_count, days,
+        prescription, feedback_rating, unresolved_pain_count,
+        exercise:exercise_library_id ( name, movement_category, exercise_type )
+      `)
+      .eq('program_id', program.id)
+      .order('sort_order');
+    assignments = (rows ?? []).map((r) => ({
+      assignmentId: r.assignment_id,
+      name: r.exercise?.name,
+      movement_category: r.exercise?.movement_category,
+      exercise_type: r.exercise?.exercise_type,
+      prescription: r.prescription,
+      days: r.days ?? [],
+      scheduledCount: r.scheduled_count ?? 0,
+      completedCount: r.completed_count ?? 0,
+      feedback: r.feedback_rating ?? null,
+      unresolvedPainCount: r.unresolved_pain_count ?? 0,
+    }));
+  }
+
+  const { data: painReports } = await sb()
+    .from('pain_reports')
+    .select(PAIN_REPORT_SELECT)
+    .eq('employee_id', employeeId)
+    .order('reported_at', { ascending: false });
+
+  return { employee, program: program ?? null, compliance, assignments, painReports: painReports ?? [] };
+}
+
 export async function fetchUnresolvedPainReports() {
   const { data, error } = await sb()
     .from('pain_reports')

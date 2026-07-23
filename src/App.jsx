@@ -6,6 +6,7 @@ import EmployeeShell from './pages/EmployeeShell.jsx';
 import EmployeeToday from './pages/EmployeeToday.jsx';
 import AdminShell from './pages/AdminShell.jsx';
 import AdminEmployees from './pages/AdminEmployees.jsx';
+import AdminEmployeeDetail from './pages/AdminEmployeeDetail.jsx';
 import AdminPainQueue from './pages/AdminPainQueue.jsx';
 import './styles/app.css';
 
@@ -68,6 +69,16 @@ export default function App() {
           <RequireAuth role="admin">
             <AdminShell>
               <AdminEmployees />
+            </AdminShell>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/employee/:id"
+        element={
+          <RequireAuth role="admin">
+            <AdminShell>
+              <AdminEmployeeDetail />
             </AdminShell>
           </RequireAuth>
         }

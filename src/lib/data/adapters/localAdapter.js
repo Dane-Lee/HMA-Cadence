@@ -347,6 +347,95 @@ export async function fetchUnresolvedPainReports() {
     .map(shapePainReport);
 }
 
+/**
+ * Full drill-down for one employee: program, overall weekly compliance, the
+ * per-exercise adherence breakdown (completed vs scheduled instances this week,
+ * latest feedback, unresolved pain), and the complete pain history. Backs the
+ * admin employee-detail / program-review page.
+ */
+export async function fetchAdminEmployeeDetail(employeeId) {
+  const emp = store.employees.find((e) => e.id === employeeId && e.role === 'employee');
+  if (!emp) throw new Error('Employee not found');
+
+  const program = activeProgramFor(employeeId);
+  const compliance = complianceForProgram(program);
+
+  // Rebuild the credited (assignment_id, isodow) set for this week so each
+  // assignment's completed-instance count matches the weekly compliance view.
+  const credited = new Set();
+  let programAssignments = [];
+  if (program) {
+    programAssignments = store.exercise_assignments.filter((a) => a.program_id === program.id);
+    const daysById = Object.fromEntries(programAssignments.map((a) => [a.id, a.days ?? []]));
+    const { start, end } = weekBounds();
+    for (const ci of store.check_ins) {
+      if (ci.program_id !== program.id) continue;
+      if (ci.date < start || ci.date >= end) continue;
+      const dow = isoDowOf(ci.date);
+      for (const ec of store.exercise_completions) {
+        if (ec.check_in_id !== ci.id || !ec.completed) continue;
+        if ((daysById[ec.exercise_assignment_id] ?? []).includes(dow)) {
+          credited.add(`${ec.exercise_assignment_id}:${dow}`);
+        }
+      }
+    }
+  }
+
+  const feedbackFor = (assignmentId) =>
+    store.exercise_feedback.find(
+      (f) => f.employee_id === employeeId && f.exercise_assignment_id === assignmentId,
+    )?.rating ?? null;
+
+  const unresolvedByAssignment = {};
+  for (const p of store.pain_reports) {
+    if (p.employee_id === employeeId && !p.resolved) {
+      unresolvedByAssignment[p.exercise_assignment_id] =
+        (unresolvedByAssignment[p.exercise_assignment_id] ?? 0) + 1;
+    }
+  }
+
+  const assignments = programAssignments
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((a) => {
+      const ex = libraryById(a.exercise_library_id) ?? {};
+      const days = a.days ?? [];
+      const completedCount = days.filter((d) => credited.has(`${a.id}:${d}`)).length;
+      return {
+        assignmentId: a.id,
+        name: ex.name,
+        movement_category: ex.movement_category,
+        exercise_type: ex.exercise_type,
+        prescription: a.prescription_override ?? ex.default_prescription,
+        days,
+        scheduledCount: days.length,
+        completedCount,
+        feedback: feedbackFor(a.id),
+        unresolvedPainCount: unresolvedByAssignment[a.id] ?? 0,
+      };
+    });
+
+  const painReports = store.pain_reports
+    .filter((p) => p.employee_id === employeeId)
+    .sort((a, b) => (a.reported_at < b.reported_at ? 1 : -1))
+    .map(shapePainReport);
+
+  return {
+    employee: {
+      id: emp.id,
+      employee_number: emp.employee_number,
+      name: emp.name,
+      active: emp.active,
+      notification_time: emp.notification_time,
+      notification_enabled: emp.notification_enabled,
+    },
+    program: program ? clone(program) : null,
+    compliance,
+    assignments,
+    painReports,
+  };
+}
+
 export async function acknowledgePain(reportId) {
   const p = store.pain_reports.find((r) => r.id === reportId);
   if (!p) throw new Error('Report not found');

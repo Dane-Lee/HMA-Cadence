@@ -53,6 +53,23 @@
  *                       completedInstances, scheduledInstances, scheduledDays,
  *                       compliancePct, unresolvedPainCount }
  *
+ * fetchAdminEmployeeDetail(employeeId: string)
+ *   → Promise<EmployeeDetail>      // full drill-down for one employee
+ *     EmployeeDetail = {
+ *       employee: { id, employee_number, name, active,
+ *                   notification_time, notification_enabled },
+ *       program: Program | null,   // the active program row (or null)
+ *       compliance: { scheduledInstances, scheduledDays,
+ *                     completedInstances, compliancePct },
+ *       assignments: AssignmentAdherence[],  // per-exercise, program order
+ *       painReports: PainReport[]  // ALL for this employee, newest first
+ *     }
+ *     AssignmentAdherence = { assignmentId, name, movement_category,
+ *       exercise_type, prescription, days: number[],
+ *       scheduledCount, completedCount,   // this week
+ *       feedback: 'thumbs_up'|'thumbs_down'|null, unresolvedPainCount }
+ *   throws Error('Employee not found')
+ *
  * fetchUnresolvedPainReports()
  *   → Promise<PainReport[]>        // newest first, resolved=false only
  *     PainReport = { id, category, reported_at, acknowledged, resolved,
@@ -88,6 +105,7 @@ export const DATA_LAYER_FUNCTIONS = [
   'submitFeedback',
   'reportPain',
   'fetchAdminEmployeeList',
+  'fetchAdminEmployeeDetail',
   'fetchUnresolvedPainReports',
   'acknowledgePain',
   'resolvePain',

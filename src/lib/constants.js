@@ -31,3 +31,10 @@ export const PAIN_CATEGORIES = [
   { key: 'discomfort',   label: 'Discomfort' },
   { key: 'other',        label: 'Other' },
 ];
+
+// Employee difficulty signal on an exercise — matches the SQL `feedback_rating`
+// enum ('thumbs_up' | 'thumbs_down'). `prompt` is what the employee taps.
+export const FEEDBACK_RATINGS = [
+  { key: 'thumbs_up',   icon: '👍', prompt: 'Going well', adminLabel: 'Going well' },
+  { key: 'thumbs_down', icon: '👎', prompt: 'Too hard',   adminLabel: 'Struggling' },
+];
