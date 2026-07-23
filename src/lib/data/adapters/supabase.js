@@ -259,19 +259,43 @@ export async function fetchAdminEmployeeList() {
   }));
 }
 
+const PAIN_REPORT_SELECT = `
+  id, category, reported_at, acknowledged, resolved, resolved_at, admin_notes,
+  employee:employee_id ( id, name, employee_number ),
+  assignment:exercise_assignment_id (
+    id,
+    exercise:exercise_library_id ( id, name, movement_category )
+  )
+`;
+
 export async function fetchUnresolvedPainReports() {
   const { data, error } = await sb()
     .from('pain_reports')
-    .select(`
-      id, category, reported_at, acknowledged, resolved,
-      employee:employee_id ( id, name, employee_number ),
-      assignment:exercise_assignment_id (
-        id,
-        exercise:exercise_library_id ( id, name, movement_category )
-      )
-    `)
+    .select(PAIN_REPORT_SELECT)
     .eq('resolved', false)
     .order('reported_at', { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+export async function acknowledgePain(reportId) {
+  const { data, error } = await sb()
+    .from('pain_reports')
+    .update({ acknowledged: true })
+    .eq('id', reportId)
+    .select(PAIN_REPORT_SELECT)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function resolvePain(reportId) {
+  const { data, error } = await sb()
+    .from('pain_reports')
+    .update({ resolved: true, acknowledged: true, resolved_at: new Date().toISOString() })
+    .eq('id', reportId)
+    .select(PAIN_REPORT_SELECT)
+    .single();
+  if (error) throw error;
+  return data;
 }

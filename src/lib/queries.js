@@ -16,3 +16,5 @@ export const submitFeedback          = db.submitFeedback;
 export const reportPain              = db.reportPain;
 export const fetchAdminEmployeeList   = db.fetchAdminEmployeeList;
 export const fetchUnresolvedPainReports = db.fetchUnresolvedPainReports;
+export const acknowledgePain          = db.acknowledgePain;
+export const resolvePain              = db.resolvePain;

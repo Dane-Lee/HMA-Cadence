@@ -56,8 +56,17 @@
  * fetchUnresolvedPainReports()
  *   → Promise<PainReport[]>        // newest first, resolved=false only
  *     PainReport = { id, category, reported_at, acknowledged, resolved,
+ *                    resolved_at, admin_notes,
  *                    employee: { id, name, employee_number },
  *                    assignment: { id, exercise: { id, name, movement_category } } }
+ *
+ * acknowledgePain(reportId: string)
+ *   → Promise<PainReport>          // same shape, acknowledged=true
+ *   Marks that the admin has seen the report (it stays in the queue until resolved).
+ *
+ * resolvePain(reportId: string)
+ *   → Promise<PainReport>          // resolved=true, resolved_at set
+ *   Closes the report; it drops out of the unresolved queue.
  *
  * ── Deferred to the sanctioned adapter (NOT buildable on local) ──────
  * These need the approved backend and are intentionally out of scope until
@@ -80,4 +89,6 @@ export const DATA_LAYER_FUNCTIONS = [
   'reportPain',
   'fetchAdminEmployeeList',
   'fetchUnresolvedPainReports',
+  'acknowledgePain',
+  'resolvePain',
 ];

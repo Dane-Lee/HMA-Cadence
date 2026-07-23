@@ -408,3 +408,31 @@
   padding: 80px 24px;
   color: var(--text-muted);
 }
+
+/* ── Inline buttons (admin actions) ──────────────────── */
+.btn-inline {
+  width: auto;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: .9rem;
+}
+
+.pain-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  min-width: 120px;
+}
+.employee-card.is-acknowledged { opacity: .72; }
+
+/* ── Clickable employee card (links to detail) ───────── */
+.employee-card--link {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+}
+.employee-card--link:hover { border-color: var(--accent); }

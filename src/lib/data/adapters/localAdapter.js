@@ -310,34 +310,57 @@ export async function fetchAdminEmployeeList() {
   });
 }
 
+/** Shape one stored pain_report row into the contract's PainReport. */
+function shapePainReport(p) {
+  const employee = store.employees.find((e) => e.id === p.employee_id) ?? null;
+  const assignment = store.exercise_assignments.find(
+    (a) => a.id === p.exercise_assignment_id,
+  ) ?? null;
+  const exercise = assignment ? libraryById(assignment.exercise_library_id) : null;
+
+  return {
+    id: p.id,
+    category: p.category,
+    reported_at: p.reported_at,
+    acknowledged: p.acknowledged,
+    resolved: p.resolved,
+    resolved_at: p.resolved_at ?? null,
+    admin_notes: p.admin_notes ?? null,
+    employee: employee
+      ? { id: employee.id, name: employee.name, employee_number: employee.employee_number }
+      : null,
+    assignment: assignment
+      ? {
+          id: assignment.id,
+          exercise: exercise
+            ? { id: exercise.id, name: exercise.name, movement_category: exercise.movement_category }
+            : null,
+        }
+      : null,
+  };
+}
+
 export async function fetchUnresolvedPainReports() {
   return store.pain_reports
     .filter((p) => !p.resolved)
     .sort((a, b) => (a.reported_at < b.reported_at ? 1 : -1))
-    .map((p) => {
-      const employee = store.employees.find((e) => e.id === p.employee_id) ?? null;
-      const assignment = store.exercise_assignments.find(
-        (a) => a.id === p.exercise_assignment_id,
-      ) ?? null;
-      const exercise = assignment ? libraryById(assignment.exercise_library_id) : null;
+    .map(shapePainReport);
+}
 
-      return {
-        id: p.id,
-        category: p.category,
-        reported_at: p.reported_at,
-        acknowledged: p.acknowledged,
-        resolved: p.resolved,
-        employee: employee
-          ? { id: employee.id, name: employee.name, employee_number: employee.employee_number }
-          : null,
-        assignment: assignment
-          ? {
-              id: assignment.id,
-              exercise: exercise
-                ? { id: exercise.id, name: exercise.name, movement_category: exercise.movement_category }
-                : null,
-            }
-          : null,
-      };
-    });
+export async function acknowledgePain(reportId) {
+  const p = store.pain_reports.find((r) => r.id === reportId);
+  if (!p) throw new Error('Report not found');
+  p.acknowledged = true;
+  persist();
+  return shapePainReport(p);
+}
+
+export async function resolvePain(reportId) {
+  const p = store.pain_reports.find((r) => r.id === reportId);
+  if (!p) throw new Error('Report not found');
+  p.resolved = true;
+  p.acknowledged = true; // resolving implies it was seen
+  p.resolved_at = new Date().toISOString();
+  persist();
+  return shapePainReport(p);
 }
