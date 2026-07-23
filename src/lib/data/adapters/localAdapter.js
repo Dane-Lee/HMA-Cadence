@@ -170,12 +170,16 @@ export async function fetchActiveProgram(employeeId) {
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((a) => {
       const ex = libraryById(a.exercise_library_id) ?? {};
+      const feedback = store.exercise_feedback.find(
+        (f) => f.employee_id === employeeId && f.exercise_assignment_id === a.id,
+      )?.rating ?? null;
       return {
         assignmentId: a.id,
         prescription: a.prescription_override ?? ex.default_prescription,
         days: a.days ?? [],
         durationSec: ex.default_duration_sec,
         sortOrder: a.sort_order,
+        feedback,
         ...clone(ex),
       };
     });

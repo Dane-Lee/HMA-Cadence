@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuth } from '../lib/auth.jsx';
-import { MOVEMENT_CATEGORIES, PAIN_CATEGORIES } from '../lib/constants.js';
+import { MOVEMENT_CATEGORIES, PAIN_CATEGORIES, FEEDBACK_RATINGS } from '../lib/constants.js';
 import {
   fetchActiveProgram,
   fetchTodayCheckIn,
@@ -18,8 +18,12 @@ export default function EmployeeToday() {
   const [error, setError] = useState(null);
   const [showDoneBanner, setShowDoneBanner] = useState(false);
 
-  // expansion state — which card has the pain prompt open
+  // expansion state — which card has the feedback/pain prompt open
   const [expandedFor, setExpandedFor] = useState(null); // assignmentId | null
+  // optimistic feedback overrides, keyed by assignmentId (falls back to program value)
+  const [feedbackOverrides, setFeedbackOverrides] = useState({});
+  // brief "thanks for the feedback" acknowledgement, keyed by assignmentId
+  const [feedbackAckFor, setFeedbackAckFor] = useState(null);
 
   const load = useCallback(async () => {
     if (!employee?.id) return;
@@ -107,6 +111,22 @@ export default function EmployeeToday() {
     } catch (err) {
       setError(err.message);
       load();
+    }
+  }
+
+  const feedbackOf = (a) => feedbackOverrides[a.assignmentId] ?? a.feedback ?? null;
+
+  async function onFeedback(assignment, rating) {
+    const prev = feedbackOverrides[assignment.assignmentId] ?? assignment.feedback ?? null;
+    // optimistic
+    setFeedbackOverrides((m) => ({ ...m, [assignment.assignmentId]: rating }));
+    setFeedbackAckFor(assignment.assignmentId);
+    setTimeout(() => setFeedbackAckFor((cur) => (cur === assignment.assignmentId ? null : cur)), 1500);
+    try {
+      await submitFeedback({ employeeId: employee.id, assignmentId: assignment.assignmentId, rating });
+    } catch (err) {
+      setError(err.message);
+      setFeedbackOverrides((m) => ({ ...m, [assignment.assignmentId]: prev }));
     }
   }
 
@@ -201,6 +221,8 @@ export default function EmployeeToday() {
           {group.items.map((a) => {
             const isComplete = completedSet.has(a.assignmentId);
             const isExpanded = expandedFor === a.assignmentId;
+            const fb = feedbackOf(a);
+            const fbMeta = FEEDBACK_RATINGS.find((f) => f.key === fb);
 
             return (
               <div
@@ -220,12 +242,15 @@ export default function EmployeeToday() {
                   <div className="exercise-card__meta">
                     <span className="exercise-card__type-pill">{a.exercise_type}</span>
                     <span>{a.prescription}</span>
+                    {fbMeta && (
+                      <span className="exercise-card__fb" title={fbMeta.adminLabel}>{fbMeta.icon}</span>
+                    )}
                   </div>
                 </div>
 
                 <button
                   className="exercise-card__flag"
-                  aria-label="Report pain or issue"
+                  aria-label="Give feedback or report an issue"
                   onClick={() => setExpandedFor(isExpanded ? null : a.assignmentId)}
                 >
                   ⚑
@@ -234,7 +259,22 @@ export default function EmployeeToday() {
                 {isExpanded && (
                   <div className="exercise-card__expand">
                     <div className="muted" style={{ marginBottom: 8, fontSize: '.9rem' }}>
-                      What are you experiencing?
+                      How&rsquo;s this exercise going?
+                    </div>
+                    <div className="option-row">
+                      {FEEDBACK_RATINGS.map((f) => (
+                        <button
+                          key={f.key}
+                          className={fb === f.key ? 'is-selected' : ''}
+                          onClick={() => onFeedback(a, f.key)}
+                        >
+                          {f.icon} {f.prompt}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="muted" style={{ margin: '14px 0 8px', fontSize: '.9rem' }}>
+                      Pain or discomfort? Let Dane know.
                     </div>
                     <div className="option-row">
                       {PAIN_CATEGORIES.map((p) => (
@@ -242,8 +282,15 @@ export default function EmployeeToday() {
                           {p.label}
                         </button>
                       ))}
-                      <button onClick={() => setExpandedFor(null)}>Cancel</button>
                     </div>
+
+                    <button
+                      className="btn-ghost"
+                      style={{ marginTop: 12, width: '100%' }}
+                      onClick={() => setExpandedFor(null)}
+                    >
+                      {feedbackAckFor === a.assignmentId ? 'Thanks — saved ✓' : 'Close'}
+                    </button>
                   </div>
                 )}
               </div>

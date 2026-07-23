@@ -94,9 +94,11 @@ export async function fetchActiveProgram(employeeId) {
         id, source_exercise_id, name, description, default_prescription,
         default_duration_sec, movement_category, exercise_type,
         image_filename, image_url
-      )
+      ),
+      feedback:exercise_feedback ( rating )
     `)
     .eq('program_id', program.id)
+    .eq('feedback.employee_id', employeeId)
     .order('sort_order', { ascending: true });
 
   if (aErr) throw aErr;
@@ -109,6 +111,7 @@ export async function fetchActiveProgram(employeeId) {
       days: a.days ?? [],
       durationSec: a.exercise.default_duration_sec,
       sortOrder: a.sort_order,
+      feedback: a.feedback?.[0]?.rating ?? null,
       ...a.exercise,
     })),
   };

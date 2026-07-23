@@ -28,9 +28,12 @@
  *   → Promise<Program | null>
  *     Program = { ...programRow, assignments: Assignment[] }
  *     Assignment = { assignmentId, prescription, days: number[], durationSec,
- *                    sortOrder, id, source_exercise_id, name, description,
+ *                    sortOrder, feedback: 'thumbs_up'|'thumbs_down'|null,
+ *                    id, source_exercise_id, name, description,
  *                    default_prescription, default_duration_sec,
  *                    movement_category, exercise_type, image_filename, image_url }
+ *                    // `feedback` is this employee's standing rating for the
+ *                    // assignment (from submitFeedback), or null if none yet.
  *
  * fetchTodayCheckIn(employeeId: string, programId: string)
  *   → Promise<CheckIn | null>
