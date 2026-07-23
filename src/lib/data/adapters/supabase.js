@@ -18,6 +18,12 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { assertValidPin, PIN_COST } from '../pin.js';
+import {
+  validatePlanPayload,
+  PlanValidationError,
+  SchemaVersionError,
+  SUPPORTED_SCHEMA_VERSION,
+} from '../planValidation.js';
 
 // Lazily created so merely importing this reference file never constructs a
 // client or requires env vars.
@@ -381,4 +387,36 @@ export async function resolvePain(reportId) {
     .single();
   if (error) throw error;
   return data;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Plan intake (Tracker → Cadence)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Reference transport for contract v1. In production the Tracker (not this
+ * client) POSTs the payload to the `ingest-plan` Edge Function, which validates
+ * and expands it server-side with the service role — the anon key can't perform
+ * the privileged upserts, and PIN hashing must not happen client-side. This
+ * forwards to that endpoint so the reference mirrors docs §2 exactly.
+ */
+export async function ingestPlan(payload) {
+  if (payload?.schema_version !== SUPPORTED_SCHEMA_VERSION) {
+    throw new SchemaVersionError(payload?.schema_version);
+  }
+  const errors = validatePlanPayload(payload);
+  if (errors.length) throw new PlanValidationError(errors);
+
+  const base = import.meta.env.VITE_SUPABASE_URL;
+  const secret = import.meta.env.VITE_INGEST_SHARED_SECRET;
+  const res = await fetch(`${base}/functions/v1/ingest-plan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 409) throw new SchemaVersionError(payload?.schema_version);
+  if (res.status === 422) throw new PlanValidationError(body.errors ?? ['Validation failed']);
+  if (!res.ok) throw new Error(body.error ?? `Ingest failed (${res.status})`);
+  return body;
 }

@@ -16,24 +16,32 @@
 import bcrypt from 'bcryptjs';
 import { buildSeedDb } from '../localSeed.js';
 import { assertValidPin, PIN_COST } from '../pin.js';
+import {
+  validatePlanPayload,
+  PlanValidationError,
+  SchemaVersionError,
+  SUPPORTED_SCHEMA_VERSION,
+} from '../planValidation.js';
 
 const STORAGE_KEY = 'hma-cadence:local-db';
 const DAY_MS = 86_400_000;
 
 // ── store load/persist ──────────────────────────────────────────────
-function load() {
+// Read the persisted store, or null if absent/unreadable. Deliberately does
+// NOT seed or write — seeding happens after `store` is initialized so we never
+// assign to `store` while it's still in its temporal dead zone (a fresh load
+// with empty localStorage would otherwise crash before the app renders).
+function readStored() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {
     /* fall through to a fresh seed */
   }
-  const seeded = buildSeedDb();
-  persist(seeded);
-  return seeded;
+  return null;
 }
 
-let store = load();
+let store = readStored() ?? buildSeedDb();
 
 function persist(next = store) {
   store = next;
@@ -43,6 +51,9 @@ function persist(next = store) {
     /* localStorage unavailable (e.g. private mode) — stay in-memory */
   }
 }
+
+// Write the (possibly freshly-seeded) store back on first run.
+persist();
 
 /** Rebuild the fictional dataset from scratch. Handy for demos/dev. */
 export function resetLocalDb() {
@@ -59,6 +70,17 @@ const uid = () =>
 /** Today's date (UTC-derived) as YYYY-MM-DD — matches check_ins.date. */
 function today() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// A few trivially-guessable temp PINs to avoid handing out on new accounts.
+const WEAK_TEMP_PINS = new Set(['0000', '1234', '1111', '2580', '1212', '4321']);
+/** Random 4-digit temp PIN (avoids obvious values); the new hire must change it. */
+function generateTempPin() {
+  for (let i = 0; i < 50; i++) {
+    const pin = String(Math.floor(1000 + Math.random() * 9000));
+    if (!WEAK_TEMP_PINS.has(pin) && !/^(\d)\1{3}$/.test(pin)) return pin;
+  }
+  return '4726';
 }
 
 /** ISO weekday (1=Mon … 7=Sun) for a YYYY-MM-DD string. */
@@ -364,6 +386,131 @@ export async function fetchUnresolvedPainReports() {
     .filter((p) => !p.resolved)
     .sort((a, b) => (a.reported_at < b.reported_at ? 1 : -1))
     .map(shapePainReport);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Plan intake (Tracker → Cadence)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Receive and apply one Plan Payload (contract v1 — see
+ * docs/plan-payload-contract.md). This is the Cadence-side receiver logic that
+ * a real deployment runs inside the sanctioned backend's ingest endpoint; here
+ * it runs against the local store so the whole intake flow is exercisable with
+ * test data (no cross-app networking, which stays deferred to that backend).
+ *
+ * Steps mirror the contract: validate wholesale → upsert employee (auto-create
+ * with a temp PIN if new) → upsert exercises into the library by
+ * source_exercise_id → archive the current active program and insert the new
+ * one (idempotent by plan_id) → insert assignments.
+ *
+ * Returns { status, plan_id, employee_id, program_id, created_account, temp_pin }.
+ * Throws SchemaVersionError (409) or PlanValidationError (422) on bad input.
+ */
+export async function ingestPlan(payload) {
+  if (payload?.schema_version !== SUPPORTED_SCHEMA_VERSION) {
+    throw new SchemaVersionError(payload?.schema_version);
+  }
+  const errors = validatePlanPayload(payload);
+  if (errors.length) throw new PlanValidationError(errors);
+
+  const { plan_id, employee: emp, assessment = {}, schedule, exercises } = payload;
+
+  // 1. Upsert employee by badge #. Never touch an existing account's PIN.
+  const badge = emp.employee_number.trim();
+  let account = store.employees.find((e) => e.employee_number === badge);
+  let createdAccount = false;
+  let tempPin = null;
+  if (!account) {
+    createdAccount = true;
+    tempPin = generateTempPin();
+    const displayName = emp.name ?? `${emp.first_name ?? ''} ${emp.last_name ?? ''}`.trim();
+    account = {
+      id: uid(),
+      employee_number: badge,
+      name: displayName || badge,
+      pin_hash: bcrypt.hashSync(tempPin, PIN_COST),
+      must_change_pin: true,
+      role: 'employee',
+      notification_time: '07:00',
+      notification_enabled: true,
+      active: true,
+    };
+    store.employees.push(account);
+  } else if (emp.name && account.name !== emp.name) {
+    account.name = emp.name; // refresh display name only
+  }
+
+  // 2. Upsert exercises into the library, keyed by the Tracker's source id.
+  for (const ex of exercises) {
+    const fields = {
+      source_exercise_id: ex.source_exercise_id,
+      name: ex.name,
+      description: ex.instructions ?? null,
+      default_prescription: ex.default_prescription ?? null,
+      default_duration_sec: ex.duration_sec ?? null,
+      movement_category: ex.movement_category,
+      exercise_type: ex.exercise_type,
+      image_filename: ex.image_ref ?? null,
+      image_url: null,
+      active: true,
+    };
+    const lib = store.exercise_library.find((l) => l.source_exercise_id === ex.source_exercise_id);
+    if (lib) Object.assign(lib, fields);
+    else store.exercise_library.push({ id: `lib-${ex.source_exercise_id}`, ...fields });
+  }
+  const libIdFor = (sourceId) =>
+    store.exercise_library.find((l) => l.source_exercise_id === sourceId)?.id;
+
+  // 3/4. Idempotent by plan_id: reuse the program row (and drop its old
+  // assignments) if this plan was applied before; otherwise archive the current
+  // active program and create a fresh one. Old exercise_completions that pointed
+  // at replaced assignments are simply ignored by the compliance views.
+  let program = store.programs.find((p) => p.source_plan_id === plan_id);
+  if (program) {
+    store.exercise_assignments = store.exercise_assignments.filter((a) => a.program_id !== program.id);
+  } else {
+    for (const p of store.programs) {
+      if (p.employee_id === account.id && p.status === 'active') p.status = 'archived';
+    }
+    program = { id: uid(), employee_id: account.id, source_plan_id: plan_id };
+    store.programs.push(program);
+  }
+  Object.assign(program, {
+    status: 'active',
+    days_per_week: schedule.work_days.length,
+    initial_assessment_date: assessment.assessment_date ?? null,
+    follow_up_date: assessment.follow_up_date ?? null,
+    reassessment_date: assessment.reassessment_date ?? null,
+    created_by: null,
+    notes: assessment.notes ?? null,
+    work_days: schedule.work_days,
+    session_budget_sec: schedule.session_budget_sec ?? null,
+    assessment_type: assessment.assessment_type ?? null,
+    total_score: assessment.total_score ?? null,
+  });
+
+  // 5. Insert the per-employee assignments (with per-weekday schedule).
+  for (const ex of exercises) {
+    store.exercise_assignments.push({
+      id: uid(),
+      program_id: program.id,
+      exercise_library_id: libIdFor(ex.source_exercise_id),
+      days: ex.days,
+      prescription_override: ex.prescription_override ?? null,
+      sort_order: ex.sort_order ?? 0,
+    });
+  }
+
+  persist();
+  return {
+    status: 'applied',
+    plan_id,
+    employee_id: account.id,
+    program_id: program.id,
+    created_account: createdAccount,
+    temp_pin: tempPin,
+  };
 }
 
 /**

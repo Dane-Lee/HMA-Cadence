@@ -94,6 +94,22 @@
  *   → Promise<PainReport>          // resolved=true, resolved_at set
  *   Closes the report; it drops out of the unresolved queue.
  *
+ * ── Plan intake (Tracker → Cadence, contract v1) ────────────────────
+ * ingestPlan(payload)
+ *   → Promise<IngestResult>
+ *     IngestResult = { status: 'applied', plan_id, employee_id, program_id,
+ *                      created_account: boolean, temp_pin: string|null }
+ *   Validates a Plan Payload (docs/plan-payload-contract.md) wholesale, then
+ *   upserts the employee (auto-creates with a temp PIN if new), upserts each
+ *   exercise into the library by source_exercise_id, archives the current
+ *   active program, and inserts the new program + assignments. Idempotent by
+ *   plan_id. Throws SchemaVersionError (409) or PlanValidationError (422,
+ *   carries .errors) — see ./planValidation.js.
+ *   NOTE: in production this receiver runs inside the sanctioned backend's
+ *   ingest endpoint (the Tracker POSTs to it). The local adapter runs the same
+ *   logic in-process so the flow is testable; the cross-app transport is
+ *   deferred to that backend.
+ *
  * ── Deferred to the sanctioned adapter (NOT buildable on local) ──────
  * These need the approved backend and are intentionally out of scope until
  * ATI names one:
@@ -119,4 +135,5 @@ export const DATA_LAYER_FUNCTIONS = [
   'fetchUnresolvedPainReports',
   'acknowledgePain',
   'resolvePain',
+  'ingestPlan',
 ];

@@ -9,6 +9,7 @@ import AdminShell from './pages/AdminShell.jsx';
 import AdminEmployees from './pages/AdminEmployees.jsx';
 import AdminEmployeeDetail from './pages/AdminEmployeeDetail.jsx';
 import AdminPainQueue from './pages/AdminPainQueue.jsx';
+import AdminImportPlan from './pages/AdminImportPlan.jsx';
 import './styles/app.css';
 
 function RequireAuth({ children, role }) {
@@ -100,6 +101,16 @@ export default function App() {
           <RequireAuth role="admin">
             <AdminShell>
               <AdminPainQueue />
+            </AdminShell>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/import"
+        element={
+          <RequireAuth role="admin">
+            <AdminShell>
+              <AdminImportPlan />
             </AdminShell>
           </RequireAuth>
         }

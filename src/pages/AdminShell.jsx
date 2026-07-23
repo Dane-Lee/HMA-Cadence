@@ -14,6 +14,7 @@ export default function AdminShell({ children }) {
         <nav className="app-header__nav">
           <NavLink to="/admin" end>Employees</NavLink>
           <NavLink to="/admin/pain">Pain Queue</NavLink>
+          <NavLink to="/admin/import">Import</NavLink>
         </nav>
 
         <button className="app-header__signout" onClick={signOut}>
