@@ -58,6 +58,15 @@ export function AuthProvider({ children }) {
     return employee;
   }, [session?.employee?.id]);
 
+  // Persist reminder preferences and refresh the session employee in place.
+  const updateNotificationPrefs = useCallback(async (prefs) => {
+    const employeeId = session?.employee?.id;
+    if (!employeeId) throw new Error('Not signed in');
+    const employee = await db.updateNotificationPrefs({ employeeId, ...prefs });
+    setSession((prev) => (prev ? { ...prev, employee } : prev));
+    return employee;
+  }, [session?.employee?.id]);
+
   const value = {
     session,
     employee: session?.employee ?? null,
@@ -69,6 +78,7 @@ export function AuthProvider({ children }) {
     signIn,
     signOut,
     changePin,
+    updateNotificationPrefs,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

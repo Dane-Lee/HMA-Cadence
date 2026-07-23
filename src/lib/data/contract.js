@@ -24,6 +24,12 @@
  *   throws Error(<validation reason>)
  *
  * ── Employee-facing ─────────────────────────────────────────────────
+ * updateNotificationPrefs({ employeeId, notification_enabled?, notification_time? })
+ *   → Promise<Employee>            // updated employee, no pin_hash
+ *   Persists the employee's daily-reminder preference (on/off + HH:MM). The
+ *   in-app reminder scheduler reads these; background push is deferred to the
+ *   sanctioned backend (needs a push service — see below).
+ *
  * fetchActiveProgram(employeeId: string)
  *   → Promise<Program | null>
  *     Program = { ...programRow, assignments: Assignment[] }
@@ -101,6 +107,7 @@
 export const DATA_LAYER_FUNCTIONS = [
   'authenticate',
   'changePin',
+  'updateNotificationPrefs',
   'fetchActiveProgram',
   'fetchTodayCheckIn',
   'toggleExerciseComplete',

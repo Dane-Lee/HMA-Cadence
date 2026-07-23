@@ -157,6 +157,21 @@ export async function changePin({ employeeId, newPin }) {
   return clone(safe);
 }
 
+/**
+ * Update an employee's reminder preferences (enabled + time-of-day). Returns
+ * the updated employee without pin_hash so the session can refresh in place.
+ */
+export async function updateNotificationPrefs({ employeeId, notification_enabled, notification_time }) {
+  const emp = store.employees.find((e) => e.id === employeeId);
+  if (!emp) throw new Error('Employee not found');
+  if (typeof notification_enabled === 'boolean') emp.notification_enabled = notification_enabled;
+  if (notification_time) emp.notification_time = notification_time;
+  persist();
+
+  const { pin_hash, ...safe } = emp;
+  return clone(safe);
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // Programs / assignments (employee-facing)
 // ─────────────────────────────────────────────────────────────────────

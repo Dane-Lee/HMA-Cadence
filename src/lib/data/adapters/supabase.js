@@ -71,6 +71,20 @@ export async function changePin({ employeeId, newPin }) {
   return data;
 }
 
+export async function updateNotificationPrefs({ employeeId, notification_enabled, notification_time }) {
+  const patch = {};
+  if (typeof notification_enabled === 'boolean') patch.notification_enabled = notification_enabled;
+  if (notification_time) patch.notification_time = notification_time;
+  const { data, error } = await sb()
+    .from('employees')
+    .update(patch)
+    .eq('id', employeeId)
+    .select('id, employee_number, name, role, must_change_pin, active, notification_time, notification_enabled')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // Programs / assignments (employee-facing)
 // ─────────────────────────────────────────────────────────────────────

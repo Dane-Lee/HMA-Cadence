@@ -4,6 +4,7 @@ import Login from './pages/Login.jsx';
 import SetPin from './pages/SetPin.jsx';
 import EmployeeShell from './pages/EmployeeShell.jsx';
 import EmployeeToday from './pages/EmployeeToday.jsx';
+import EmployeeSettings from './pages/EmployeeSettings.jsx';
 import AdminShell from './pages/AdminShell.jsx';
 import AdminEmployees from './pages/AdminEmployees.jsx';
 import AdminEmployeeDetail from './pages/AdminEmployeeDetail.jsx';
@@ -58,6 +59,16 @@ export default function App() {
           <RequireAuth role="employee">
             <EmployeeShell>
               <EmployeeToday />
+            </EmployeeShell>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <RequireAuth role="employee">
+            <EmployeeShell>
+              <EmployeeSettings />
             </EmployeeShell>
           </RequireAuth>
         }

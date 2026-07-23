@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import { MOVEMENT_CATEGORIES, PAIN_CATEGORIES, FEEDBACK_RATINGS } from '../lib/constants.js';
 import {
@@ -24,6 +25,16 @@ export default function EmployeeToday() {
   const [feedbackOverrides, setFeedbackOverrides] = useState({});
   // brief "thanks for the feedback" acknowledgement, keyed by assignmentId
   const [feedbackAckFor, setFeedbackAckFor] = useState(null);
+  // first-run welcome, dismissed permanently per employee
+  const onboardKey = employee?.id ? `hma-cadence:onboarded:${employee.id}` : null;
+  const [onboardDismissed, setOnboardDismissed] = useState(() => {
+    try { return onboardKey ? localStorage.getItem(onboardKey) === '1' : false; } catch { return false; }
+  });
+
+  function dismissOnboarding() {
+    setOnboardDismissed(true);
+    try { if (onboardKey) localStorage.setItem(onboardKey, '1'); } catch { /* ignore */ }
+  }
 
   const load = useCallback(async () => {
     if (!employee?.id) return;
@@ -169,6 +180,21 @@ export default function EmployeeToday() {
 
   const firstName = employee?.name?.split(' ')[0] ?? '';
 
+  const onboarding = onboardDismissed ? null : (
+    <div className="onboarding">
+      <div className="onboarding__title">Welcome to HMA, {firstName} 👋</div>
+      <p className="onboarding__body">
+        These are the corrective exercises Dane set up for you. Check each one off as
+        you go — it only takes a few minutes. Tap the ⚑ on any exercise to share how
+        it&rsquo;s going or flag pain.
+      </p>
+      <div className="onboarding__actions">
+        <Link className="btn btn-inline" to="/settings">Set a daily reminder</Link>
+        <button className="btn-ghost btn-inline" onClick={dismissOnboarding}>Got it</button>
+      </div>
+    </div>
+  );
+
   if (!program) {
     return (
       <div className="empty-state">
@@ -181,17 +207,21 @@ export default function EmployeeToday() {
   // Active program, but nothing scheduled for today's weekday → rest day.
   if (total === 0) {
     return (
-      <div className="empty-state">
-        <div className="today-greeting" style={{ marginBottom: 12 }}>Hi {firstName} 👋</div>
-        <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>Nothing scheduled today</h2>
-        <p>Enjoy your rest day — your next exercises will be here when they’re due.</p>
-      </div>
+      <>
+        {onboarding}
+        <div className="empty-state">
+          <div className="today-greeting" style={{ marginBottom: 12 }}>Hi {firstName} 👋</div>
+          <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>Nothing scheduled today</h2>
+          <p>Enjoy your rest day — your next exercises will be here when they’re due.</p>
+        </div>
+      </>
     );
   }
   const pctDone = total ? Math.round((done / total) * 100) : 0;
 
   return (
     <>
+      {onboarding}
       <div className="today-greeting">Hi {firstName} 👋</div>
       <div className="today-progress">
         <div>
