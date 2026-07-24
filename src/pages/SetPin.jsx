@@ -47,7 +47,7 @@ export default function SetPin() {
         <div className="login-card__brand">
           <div className="login-card__mark">H</div>
           <div>
-            <div>HMA Tracker</div>
+            <div>HMA Cadence</div>
             <div className="muted" style={{ fontSize: '.8rem', fontWeight: 400 }}>
               Hendrickson · Navarre
             </div>

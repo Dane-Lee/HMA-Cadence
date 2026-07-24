@@ -14,7 +14,7 @@ import { db } from './data/index.js';
  * { employee, signedInAt }.
  */
 
-const STORAGE_KEY = 'hma-tracker:session';
+const STORAGE_KEY = 'hma-cadence:session';
 
 const AuthContext = createContext(null);
 
