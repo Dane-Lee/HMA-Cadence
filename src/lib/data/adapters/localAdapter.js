@@ -4,14 +4,12 @@
  * Implements the full Cadence data-layer contract (see ../contract.js) against
  * a fictional dataset held in memory and persisted to localStorage. This is the
  * default backend so the whole app runs end-to-end with test data and zero
- * cloud dependency — the arrangement ATI IT approved (build everything except
- * the banned parts: no Supabase DB, no PHI to any AI platform).
+ * cloud dependency — the arrangement ATI IT approved (no external database, no
+ * PHI to any AI platform).
  *
  * When ATI names a sanctioned database, add a sibling adapter that fulfils the
  * same contract and select it in ../index.js; no page or component changes.
- *
- * Return shapes here are kept identical to the Supabase reference adapter
- * (./supabase.js) so the two are interchangeable.
+ * Return shapes are defined by ../contract.js so adapters stay interchangeable.
  */
 import bcrypt from 'bcryptjs';
 import { buildSeedDb } from '../localSeed.js';

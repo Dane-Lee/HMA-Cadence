@@ -6,8 +6,8 @@
  * Everything here is invented for development and demos. Do not paste real
  * employee data into this file.
  *
- * The shape mirrors the SQL tables (supabase/migrations 0001/0003/0004) so the
- * local adapter and a future ATI-sanctioned-DB adapter stay swap-compatible:
+ * The shape mirrors the entity model in ./contract.js so the local adapter and
+ * a future ATI-sanctioned-DB adapter stay swap-compatible:
  *   employees, exercise_library, programs, exercise_assignments,
  *   check_ins, exercise_completions, exercise_feedback, pain_reports.
  *

@@ -12,9 +12,8 @@
  *   • A future ATI-sanctioned DB — add its adapter under ./adapters/ and wire it
  *     below. See ./contract.js for the exact surface an adapter must implement.
  *
- * NOTE: The Supabase adapter (./adapters/supabase.js) is deliberately NOT
- * importable here — Supabase is prohibited as the DB. It is kept only as the
- * reference implementation of the contract.
+ * NOTE: No external/cloud database adapter exists in this project. Until ATI
+ * names a sanctioned backend, 'local' is the only backend.
  */
 import * as local from './adapters/localAdapter.js';
 

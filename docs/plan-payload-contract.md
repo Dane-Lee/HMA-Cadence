@@ -16,10 +16,10 @@ EIS finalizes a program in the Tracker
 Tracker builds ONE plan payload (this contract) and writes it to a local outbox
         │  (retries; survives offline; subtle "waiting to sync" indicator)
         ▼
-POST → Cadence Supabase Edge Function  `ingest-plan`   (Bearer shared secret)
+POST → Cadence intake endpoint  `ingest-plan`   (Bearer shared secret)
         │
         ▼
-Edge Function validates + expands the payload:
+The intake validates + expands the payload:
   • upsert employee (by employee_number) — auto-create account w/ temp PIN if new
   • upsert each exercise into exercise_library (by source_exercise_id)
   • archive the employee's current active program, insert the new one
@@ -35,10 +35,15 @@ Idempotent: re-POSTing the same `plan_id` updates in place, never duplicates.
 
 ## 2. Transport
 
-- **Endpoint:** `POST https://<project>.supabase.co/functions/v1/ingest-plan`
-- **Auth:** `Authorization: Bearer <INGEST_SHARED_SECRET>` — a dedicated secret, **not** the
-  anon or service_role key. The Tracker holds only this secret; it can submit a plan and
-  nothing else. The function uses the service_role key server-side to perform writes.
+> **Status:** transport is **not implemented**. No intake endpoint is deployed and no
+> hosted backend exists for Cadence. The shape below is the agreed contract for whenever
+> an ATI-sanctioned backend is named; today the receiver runs locally against the
+> local data adapter.
+
+- **Endpoint:** `POST <sanctioned-backend-host>/ingest-plan` — host TBD, pending ATI approval.
+- **Auth:** `Authorization: Bearer <INGEST_SHARED_SECRET>` — a dedicated secret scoped to
+  plan submission only. The Tracker holds only this secret; it can submit a plan and
+  nothing else. The intake performs writes server-side under its own privileged credential.
 - **Body:** `application/json`, a single Plan Payload object (below).
 - **Responses:**
   - `200 { "status": "applied", "plan_id", "employee_id", "program_id", "created_account": bool, "temp_pin": "1234"|null }`

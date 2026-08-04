@@ -3,11 +3,11 @@
 Employee-facing PWA for tracking corrective exercise compliance at the Hendrickson (Navarre, OH) facility. Receives finished exercise plans pushed from the HMA Tracker (the EIS authoring tool) and is where an employee's program and daily/weekly schedule live once created. Part of the larger HMA ecosystem described in `memory/project-hma-ecosystem.md`.
 
 - **Frontend:** React 19 + Vite 6
-- **Data layer:** swappable adapter behind `src/lib/data/` — **default is a local, fictional-data adapter** (in-memory + `localStorage`, no cloud). A future ATI-sanctioned database plugs in as one more adapter.
+- **Data layer:** swappable adapter behind `src/lib/data/` — **the only adapter is a local, fictional-data adapter** (in-memory + `localStorage`, no cloud). A future ATI-sanctioned database plugs in as one more adapter.
 - **Routing:** React Router v7
 - **PWA:** `vite-plugin-pwa` (offline shell + image cache)
 
-> **⚠ Compliance (ATI/Hendrickson IT):** **Supabase is prohibited as the database**, and **PHI must never be sent to any AI platform.** Development proceeds against the local test-data adapter only. The prior Supabase implementation is preserved for reference at `src/lib/data/adapters/supabase.js` but is not wired in and is not bundled. See `memory/project-hma-cadence-intake.md`.
+> **⚠ Compliance (ATI/Hendrickson IT):** This project has **no cloud backend and no external database**. It runs entirely on a local adapter seeded with **fictional** data. **No real employee or health data exists in this repo**, and **PHI must never be sent to any AI platform.** The database code that predated this constraint has been removed, along with its credentials, schema, and client dependency. No hosted backend will be added until ATI names a sanctioned one. See `memory/project-hma-cadence-intake.md`.
 
 ---
 
@@ -17,23 +17,26 @@ Cadence does **not** share a database with the HMA Tracker. The tracker stays a 
 offline, local-only app (single `index.html`, no cloud backend). The only link between
 the two is a **one-way push**: when the EIS finalizes a corrective exercise program in
 the tracker, the tracker sends one self-contained JSON **plan payload** to a thin intake
-on Cadence's Supabase.
+on Cadence.
+
+> **Not deployed.** The payload contract and Cadence's receiver are built and tested, but
+> there is no hosted intake endpoint — nothing is transmitted anywhere. Wiring an actual
+> transport waits on an ATI-sanctioned backend.
 
 - **Contract:** one stable JSON payload shape (employee identity, program dates/schedule,
   and the exercises with sets/reps/category/type). Cadence owns expanding it into
   `programs` + `exercise_assignments`, upserting the exercises into `exercise_library`,
   and auto-creating the employee account (temp PIN) if needed.
-- **Intake:** a Supabase **Edge Function** (guarded by a shared secret), not direct writes
-  into the normalized tables — so Cadence's schema can evolve without breaking the tracker.
+- **Intake:** a thin endpoint guarded by a shared secret, not direct writes into the
+  normalized tables — so Cadence's storage can evolve without breaking the tracker.
 - **Idempotent:** each plan carries a client-generated `plan_id` (UUID); re-sends upsert
   rather than duplicate.
 - **Outbox / offline-tolerant:** the tracker queues the push locally and auto-flushes when
   a connection is available; it never blocks the tracker's core workflow. A subtle
   indicator on the tracker notes any plan still waiting to sync.
 
-> This supersedes the older "all apps share one Supabase" plan in
-> `memory/project-hma-ecosystem.md` (its Phase 2/3). The tracker is not migrating to
-> Supabase; only Cadence is cloud-backed.
+> This supersedes the older "all apps share one database" plan in
+> `memory/project-hma-ecosystem.md` (its Phase 2/3). Neither app is cloud-backed today.
 
 ---
 
@@ -61,9 +64,10 @@ Open http://localhost:5174. The fictional dataset (personas, programs, a week of
 All reads and writes go through `src/lib/data/`:
 
 - `contract.js` — the exact function surface every adapter must implement (argument + return shapes).
-- `index.js` — selects the active adapter and exports it as `db`. Default `local`; override with `VITE_DATA_BACKEND`.
-- `adapters/localAdapter.js` + `localSeed.js` — the default, no-cloud backend.
-- `adapters/supabase.js` — **reference only, not active** (Supabase is prohibited). Kept as the canonical example of the contract for whoever writes the ATI-sanctioned adapter.
+- `index.js` — selects the active adapter and exports it as `db`. `local` is the only backend.
+- `adapters/localAdapter.js` + `localSeed.js` — the no-cloud backend.
+
+There is no cloud/database adapter in this project. When ATI names a sanctioned backend, its adapter is written against `contract.js` and dropped in alongside the local one.
 
 Views import query functions from `src/lib/queries.js` (a thin facade over `db`) and never touch a database client directly, so a backend swap needs no page changes.
 
@@ -84,8 +88,7 @@ hma-cadence/
 │   │       ├── contract.js       # the data-layer contract (shapes)
 │   │       ├── localSeed.js      # fictional seed dataset
 │   │       └── adapters/
-│   │           ├── localAdapter.js   # default: no-cloud, localStorage
-│   │           └── supabase.js       # reference only, NOT active
+│   │           └── localAdapter.js   # the only backend: no-cloud, localStorage
 │   ├── pages/
 │   │   ├── Login.jsx
 │   │   ├── EmployeeShell.jsx     # header + main layout for employees
@@ -98,10 +101,9 @@ hma-cadence/
 │   │   └── app.css               # page + component styles
 │   ├── App.jsx                   # routing + auth guards
 │   └── main.jsx                  # entry
-├── supabase/
-│   └── migrations/
-│       ├── 0001_initial_schema.sql
-│       └── 0002_seed_dev_data.sql
+├── docs/
+│   ├── plan-payload-contract.md  # Tracker → Cadence JSON contract
+│   └── sample-plan-payload.json
 ├── vite.config.js                # Vite + PWA config
 ├── index.html
 └── package.json
@@ -118,8 +120,8 @@ hma-cadence/
 - ✅ Admin employee list with weekly compliance %, follow-up dates, pain alert chips
 - ✅ Admin pain queue
 - ✅ Dark-mode-first design, large tap targets, factory-friendly typography
-- ✅ Supabase schema for all Phase 1 entities (employees, exercise_library, programs, assignments, check_ins, completions, feedback, pain_reports)
-- ✅ Weekly compliance view in SQL
+- ✅ Local data model for all Phase 1 entities (employees, exercise_library, programs, assignments, check_ins, completions, feedback, pain_reports)
+- ✅ Weekly compliance calculation
 - ✅ PWA manifest + service worker (installable, image cache)
 
 ## What's stubbed / TODO (pick up in VS Code)
@@ -129,12 +131,12 @@ These are the next things to implement. The data layer and types are ready; most
 ### Auth hardening
 - [ ] Add `bcryptjs` and replace `verifyPin()` in `src/lib/auth.jsx`
 - [ ] First-login PIN-change flow (forced when `pin_hash` matches a "temp" marker)
-- [ ] Move PIN verification to a Supabase Edge Function that mints a JWT
-- [ ] Tighten RLS policies to use `auth.jwt() ->> 'employee_id'`
+- [ ] Move PIN verification server-side once a sanctioned backend exists (mint a JWT)
+- [ ] Row-level access policies keyed to the authenticated employee (sanctioned backend)
 
 ### Integration intake (the tracker → Cadence link)
 - [ ] Define the plan payload JSON contract (shared with HMA Tracker)
-- [ ] Supabase Edge Function intake (validate, auth via shared secret, idempotent on `plan_id`)
+- [ ] Hosted intake endpoint (validate, auth via shared secret, idempotent on `plan_id`) — blocked on a sanctioned backend
 - [ ] Intake expands payload → upsert employee (+ auto temp PIN), upsert `exercise_library`, create/replace active `program` + `exercise_assignments`
 
 ### Admin features
@@ -158,7 +160,7 @@ These are the next things to implement. The data layer and types are ready; most
 ### Infrastructure
 - [ ] Exercise library is populated by the intake (upserted from pushed plans), not a manual one-time port
 - [ ] Offline write queue (cache check-ins, sync on reconnect)
-- [ ] Supabase Edge Function for push notifications (daily reminders, pain alerts to EIS)
+- [ ] Server-side push notifications (daily reminders, pain alerts to EIS) — blocked on a sanctioned backend
 - [ ] Generate real PWA icons (currently the SVG favicon is a placeholder)
 
 ---
@@ -177,5 +179,5 @@ These are the next things to implement. The data layer and types are ready; most
 ## Related memory files
 
 - `memory/project-hma-tracker.md` — Phase 1 spec (employee/admin UX, data model, design decisions)
-- `memory/project-hma-ecosystem.md` — full 7-phase vision (video capture → AI scoring → auto-generated programs → compliance). **Note:** its Phase 2/3 shared-Supabase integration is superseded — see "Integration with HMA Tracker" above.
+- `memory/project-hma-ecosystem.md` — full 7-phase vision (video capture → AI scoring → auto-generated programs → compliance). **Note:** its Phase 2/3 shared-database integration is superseded — see "Integration with HMA Tracker" above.
 - `memory/project-ati-emr.md` — the sibling EMR app

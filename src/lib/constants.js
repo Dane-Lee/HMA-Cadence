@@ -1,11 +1,10 @@
 /**
  * Domain constants — pure data, no backend dependency.
  *
- * These were previously exported from `supabase.js`; they were extracted so
- * views and the data layer can import them without pulling in any database
- * client. Keys here are the canonical HMA vocabulary and must stay in lock-step
- * with the plan payload contract (docs/plan-payload-contract.md) and the SQL
- * enums (supabase/migrations/0003_integration_fidelity.sql).
+ * Kept free of any database-client dependency so views and the data layer can
+ * import them directly. Keys here are the canonical HMA vocabulary and must
+ * stay in lock-step with the plan payload contract
+ * (docs/plan-payload-contract.md).
  */
 
 export const MOVEMENT_CATEGORIES = [
