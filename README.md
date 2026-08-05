@@ -19,10 +19,19 @@ the two is a **one-way push**: when the EIS finalizes a corrective exercise prog
 the tracker, the tracker sends one self-contained JSON **plan payload** to a thin intake
 on Cadence.
 
-> **Not deployed.** The payload contract and Cadence's receiver are built and tested, but
-> there is no hosted intake endpoint — nothing is transmitted anywhere. Wiring an actual
-> transport waits on an ATI-sanctioned backend.
+> **Status:** the Cadence side is built and tested (pairing, plan intake, pending-plan
+> hold). The Tracker side — key generation, encryption, and printing the QR — is not built
+> yet, so today plans still arrive via the manual paste importer at `/admin/import`.
 
+- **Transport: a QR code on the printed exercise sheet.** No network path at all. The
+  Tracker generates a random AES-256 key per employee, encrypts the plan to it, and prints
+  the envelope as a QR. The employee scans it with their phone's native camera, which opens
+  Cadence with the payload in the URL fragment — fragments are never sent in an HTTP
+  request, so the plan never reaches any host. See `docs/qr-envelope.md`.
+- **Pairing is in person and asynchronous.** A device that has no key holds the scanned
+  envelope as *pending* ciphertext and tells the employee to see their EIS rep. Whenever
+  they do, the rep shows the key as a QR, the phone scans it, and the held plan applies
+  itself — no reprint. Every plan after that opens silently.
 - **Contract:** one stable JSON payload shape (employee identity, program dates/schedule,
   and the exercises with sets/reps/category/type). Cadence owns expanding it into
   `programs` + `exercise_assignments`, upserting the exercises into `exercise_library`,
@@ -135,9 +144,12 @@ These are the next things to implement. The data layer and types are ready; most
 - [ ] Row-level access policies keyed to the authenticated employee (sanctioned backend)
 
 ### Integration intake (the tracker → Cadence link)
-- [ ] Define the plan payload JSON contract (shared with HMA Tracker)
-- [ ] Hosted intake endpoint (validate, auth via shared secret, idempotent on `plan_id`) — blocked on a sanctioned backend
-- [ ] Intake expands payload → upsert employee (+ auto temp PIN), upsert `exercise_library`, create/replace active `program` + `exercise_assignments`
+- [x] Plan payload JSON contract (`docs/plan-payload-contract.md`)
+- [x] Intake expands payload → upsert employee (+ auto temp PIN), upsert `exercise_library`, create/replace active `program` + `exercise_assignments`
+- [x] QR envelope v1 spec + committed interop vectors (`docs/qr-envelope.md`)
+- [x] `/pair` — device pairing, non-extractable key in IndexedDB
+- [x] `/plan` — scan intake, pending-plan hold, full state handling
+- [ ] **Tracker side:** per-employee key generation, pairing-QR screen, encrypt + print QR
 
 ### Admin features
 - [ ] Employee detail page → see their program, recent check-ins, feedback, pain history

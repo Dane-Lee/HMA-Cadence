@@ -10,6 +10,8 @@ import AdminEmployees from './pages/AdminEmployees.jsx';
 import AdminEmployeeDetail from './pages/AdminEmployeeDetail.jsx';
 import AdminPainQueue from './pages/AdminPainQueue.jsx';
 import AdminImportPlan from './pages/AdminImportPlan.jsx';
+import PairDevice from './pages/PairDevice.jsx';
+import ScanPlan from './pages/ScanPlan.jsx';
 import './styles/app.css';
 
 function RequireAuth({ children, role }) {
@@ -45,6 +47,11 @@ export default function App() {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<Login />} />
+
+      {/* QR entry points. Public: an employee scanning their first sheet has no
+          account yet — the receiver creates it when the plan is applied. */}
+      <Route path="/pair" element={<PairDevice />} />
+      <Route path="/plan" element={<ScanPlan />} />
       <Route
         path="/set-pin"
         element={
