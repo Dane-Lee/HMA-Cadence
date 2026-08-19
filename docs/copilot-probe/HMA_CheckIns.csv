@@ -1,0 +1,27 @@
+CheckInDate,EmployeeNumber,ExercisesAssigned,ExercisesCompleted,EndedEarly,PainReported,PainLocation
+2026-07-20,2901,3,3,No,No,
+2026-07-20,3287,4,4,No,No,
+2026-07-20,4412,5,5,No,No,
+2026-07-21,2901,3,2,Yes,No,
+2026-07-21,3287,4,4,No,No,
+2026-07-21,4412,5,5,No,No,
+2026-07-22,2901,3,1,Yes,Yes,Right wrist
+2026-07-22,3287,4,4,No,No,
+2026-07-22,4412,5,5,No,No,
+2026-07-23,2901,3,2,Yes,No,
+2026-07-23,3287,4,3,Yes,No,
+2026-07-23,4412,5,5,No,Yes,Left shoulder
+2026-07-24,3287,4,4,No,No,
+2026-07-24,4412,5,4,Yes,No,
+2026-07-27,2901,3,1,Yes,No,
+2026-07-27,3287,4,2,Yes,Yes,Lower back
+2026-07-27,4412,5,5,No,No,
+2026-07-28,2901,3,2,Yes,No,
+2026-07-28,4412,5,5,No,No,
+2026-07-29,4412,5,3,Yes,No,
+2026-07-30,2901,3,0,Yes,Yes,Right wrist
+2026-07-30,3287,4,3,Yes,No,
+2026-07-30,4412,5,5,No,No,
+2026-07-31,2901,3,1,Yes,Yes,Right forearm
+2026-07-31,3287,4,2,Yes,No,
+2026-07-31,4412,5,5,No,No,
