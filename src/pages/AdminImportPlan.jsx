@@ -44,7 +44,7 @@ const SAMPLE_PLAN = {
       instructions: 'On your back, knees bent. Squeeze glutes and lift hips.',
       movement_category: 'single_leg_dip', exercise_type: 'strength',
       default_prescription: '3x10-15', prescription_override: null,
-      duration_sec: 258, days: [1, 3, 5], sort_order: 0, image_ref: 'Bridge.png',
+      duration_sec: 258, days: [1, 3, 5], sort_order: 0, image_ref: 'Bridge.webp',
     },
     {
       source_exercise_id: 'sh4', name: 'Wall Slide',

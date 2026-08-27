@@ -41,7 +41,7 @@
       "duration_sec": 160,
       "days": [1, 2, 3, 4, 5],
       "sort_order": 0,
-      "image_ref": "Hip Flexor Stretch off of Table.png"
+      "image_ref": "Hip Flexor Stretch off of Table.webp"
     },
     {
       "source_exercise_id": "l3",
@@ -54,7 +54,7 @@
       "duration_sec": 310,
       "days": [1, 3, 5],
       "sort_order": 1,
-      "image_ref": "Reverse Lunge.png"
+      "image_ref": "Reverse Lunge.webp"
     },
     {
       "source_exercise_id": "s3",
@@ -67,7 +67,7 @@
       "duration_sec": 258,
       "days": [1, 3, 5],
       "sort_order": 2,
-      "image_ref": "Bridge.png"
+      "image_ref": "Bridge.webp"
     },
     {
       "source_exercise_id": "sh1",

@@ -112,7 +112,7 @@ Idempotent: re-POSTing the same `plan_id` updates in place, never duplicates.
       "duration_sec": 160,                  // EX_DURATION[id] — drives scheduling/compliance
       "days": [1, 2, 3, 4, 5],              // weekdays THIS exercise is scheduled (per-day split)
       "sort_order": 0,
-      "image_ref": "Hip Flexor Stretch off of Table.png"  // filename only; binaries deferred
+      "image_ref": "Hip Flexor Stretch off of Table.webp"  // filename only; binaries deferred
     }
     // … one per selected exercise
   ]
