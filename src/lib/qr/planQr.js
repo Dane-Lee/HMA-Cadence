@@ -28,18 +28,37 @@ import {
 import { validatePlanPayload } from '../data/planValidation.js';
 
 /**
- * Byte-mode capacity of a version-40 QR at error-correction level H (30%).
- *
- * H is deliberate rather than conservative: these codes are printed on a sheet
- * that goes onto a factory floor, gets folded, and is scanned in bad light off
- * a phone camera. The extra redundancy is the difference between a smudged code
- * that still reads and one that does not.
- *
- * The measured reality is comfortable — a 12-exercise plan deflates to roughly
- * 900 characters — so this ceiling is a guard against a pathological payload,
- * not a routine constraint.
+ * Byte-mode capacity of a version-40 QR, by error-correction level
+ * (ISO/IEC 18004). Version 40 is the largest QR there is, so these are hard
+ * ceilings — there is no bigger code to escalate to.
  */
-export const MAX_QR_BYTES = 1273;
+export const CAPACITY_BY_ECC = { L: 2953, M: 2331, Q: 1663, H: 1273 };
+
+/**
+ * Error-correction level for the plan QR.
+ *
+ * **This single constant decides whether a real plan fits at all.** Measured
+ * against genuine Tracker content (real exercise names, real instruction text,
+ * real .webp filenames) an 11-exercise plan encodes to 1977 bytes:
+ *
+ *   L (7%)  cap 2953 — 11 exercises fit
+ *   M (15%) cap 2331 — 11 exercises fit, ~354 bytes spare
+ *   Q (25%) cap 1663 — 7 exercises
+ *   H (30%) cap 1273 — 3 exercises
+ *
+ * Earlier estimates on both machines (960 bytes for 12) were measured against
+ * synthetic payloads that repeated the same instruction string, which DEFLATE
+ * collapses to almost nothing. Real plans do not compress like that.
+ *
+ * M is the working default: a full 11-exercise plan fits with headroom, and 15%
+ * damage recovery is still substantial for a sheet handed over in person. H is
+ * what you want for a code that will be folded, smudged and scanned in bad
+ * light on a factory floor — but at H the payload must be slimmed first, which
+ * reopens decision E12.
+ */
+export const PLAN_ECC_LEVEL = 'M';
+
+export const MAX_QR_BYTES = CAPACITY_BY_ECC[PLAN_ECC_LEVEL];
 
 /** Thrown when a plan cannot be turned into a scannable code. */
 export class PlanQrError extends Error {

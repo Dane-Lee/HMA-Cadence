@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { buildPlanQr, MAX_QR_BYTES, normalizeBaseUrl, PlanQrError } from '../src/lib/qr/planQr.js';
+import { buildPlanQr, CAPACITY_BY_ECC, MAX_QR_BYTES, normalizeBaseUrl, PlanQrError } from '../src/lib/qr/planQr.js';
 import {
   decryptPlanEnvelope,
   fromBase64Url,
@@ -88,17 +88,48 @@ describe('buildPlanQr', () => {
   });
 
   it('refuses to emit an oversized code rather than printing a truncated one', async () => {
-    // Instruction text is the realistic way a payload bloats.
+    // Deliberately incompressible. Repeated text deflates to almost nothing, which
+    // is how both machines first talked themselves into believing capacity was a
+    // non-issue — and an LCG rather than a modular cycle, because a short repeating
+    // pattern also deflates away and made the first version of this test pass for
+    // the wrong reason.
+    const noise = (n, seed) => { let s = (seed * 2654435761) >>> 0, o = '';
+      for (let k = 0; k < n; k++) { s = (s * 1664525 + 1013904223) >>> 0; o += String.fromCharCode(97 + ((s >>> 16) % 26)); }
+      return o; };
     const fat = plan({
-      exercises: Array.from({ length: 40 }, (_, i) => ({
-        source_exercise_id: `x${i}`, name: `Exercise ${i}`,
-        instructions: `${'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(12)}${i}`,
+      exercises: Array.from({ length: 60 }, (_, i) => ({
+        source_exercise_id: `x${i}`, name: `Exercise ${noise(24, i)}`,
+        instructions: noise(160, i + 7),
         movement_category: 'trunk_rotation', exercise_type: 'strength',
         default_prescription: '3x10', prescription_override: null,
-        duration_sec: 200, days: [1, 3], sort_order: i, image_ref: null,
+        duration_sec: 200, days: [1, 3], sort_order: i, image_ref: `${noise(20, i + 3)}.webp`,
       })),
     });
     await expect(buildPlanQr(fat, { baseUrl: BASE })).rejects.toMatchObject({ code: 'too_large' });
+  });
+
+  it('the refusal says how far over it is and what to cut', async () => {
+    // An LCG, not a modular cycle: a repeating pattern deflates away and the
+    // payload never reaches the cap, which is what made the first version of this
+    // test pass for the wrong reason.
+    const noise = (n, seed) => { let s = (seed * 2654435761) >>> 0, o = '';
+      for (let k = 0; k < n; k++) { s = (s * 1664525 + 1013904223) >>> 0; o += String.fromCharCode(97 + ((s >>> 16) % 26)); }
+      return o; };
+    const fat = plan({
+      exercises: Array.from({ length: 60 }, (_, i) => ({
+        source_exercise_id: `y${i}`, name: noise(30, i),
+        instructions: noise(180, i + 5),
+        movement_category: 'trunk_rotation', exercise_type: 'strength',
+        default_prescription: '3x10', prescription_override: null,
+        duration_sec: 200, days: [1], sort_order: i, image_ref: null,
+      })),
+    });
+    // "Too big" alone leaves the admin guessing; the numbers are the actionable part.
+    const err = await buildPlanQr(fat, { baseUrl: BASE }).catch((e) => e);
+    expect(err.code).toBe('too_large');
+    expect(err.detail.planBytes).toBeGreaterThan(err.detail.limit);
+    expect(err.detail.exercises).toBe(60);
+    expect(err.message).toMatch(/\d+ bytes/);
   });
 
   it('counts the base URL against capacity, since the QR encodes the whole URL', async () => {
@@ -108,15 +139,45 @@ describe('buildPlanQr', () => {
     expect(short.headroom).toBe(MAX_QR_BYTES - short.planBytes);
   });
 
-  it('a realistic plan leaves comfortable headroom', async () => {
-    const out = await buildPlanQr(plan({
-      exercises: Array.from({ length: 12 }, (_, i) => ({
-        ...plan().exercises[0], source_exercise_id: `e${i}`, sort_order: i,
+  /* Real instruction text from the Tracker's own library. A full plan of eleven
+     *distinct* exercises is the case the whole design has to survive, and it is
+     the case both machines got wrong by measuring twelve copies of one exercise. */
+  const REAL_INSTRUCTIONS = [
+    'Lie on a table at 45° with one leg hanging off. Let your leg hang to feel a stretch in the front of your hip.',
+    'Kneel on one knee, tuck the pelvis under, shift weight forward until a stretch is felt at the front of the hip.',
+    'Doorway, forearms on the frame at shoulder height. Step through until a stretch is felt across the chest. Hold.',
+    'On hands and knees, sit back toward the heels and reach one arm across the body along the floor.',
+    'Tilt the head toward one armpit, then gently assist with the same-side hand until a stretch is felt.',
+    'Stand facing a table, raise leg and place lower leg on the edge. Slowly lean forward until you feel a stretch in your hip.',
+    'Bosu ball (curved side up) in front. Step up and drive the opposite knee toward the ceiling. Keep abdominals contracted.',
+    'Reach one hand behind the head and down the spine. Use the other hand to draw the elbow gently back.',
+    'Side lying, knees bent 90°. Open the top arm across the body, following the hand with your eyes. Return slowly.',
+    'Tilt one ear toward the shoulder without rotating. Hold, then return through centre and repeat to the other side.',
+    'Stand with hands behind your head, step one foot back and bend both knees to ~90°. Drive through the front foot to stand.',
+  ];
+
+  it('a full plan of eleven DISTINCT exercises fits at the chosen ECC level', async () => {
+    const real = plan({
+      exercises: REAL_INSTRUCTIONS.map((instructions, i) => ({
+        source_exercise_id: `r${i}`,
+        name: ['Hip Flexor Stretch', 'Kneeling Hip Flexor Stretch', 'Doorway Pec Stretch',
+          'Child Pose with Cross Reach', 'Levator Scapulae Stretch', 'Pigeon Stretch',
+          'High Step-Ups', 'Overhead Tricep Stretch', 'Side Lying T-Spine Rotation',
+          'Cervical Side Bending', 'Reverse Lunge'][i],
+        instructions,
+        movement_category: 'trunk_rotation', exercise_type: 'flexibility',
+        default_prescription: '2x30 sec hold each side', prescription_override: null,
+        duration_sec: 160, days: [1, 3, 5], sort_order: i,
+        image_ref: `Hip Flexor Stretch off of Table ${i}.webp`,
       })),
-    }), { baseUrl: BASE });
-    // Documents the measured reality rather than just asserting "under the cap".
+    });
+    const out = await buildPlanQr(real, { baseUrl: 'https://hma-cadence.vercel.app' });
+
+    // Fits — but the margin is the point, not the pass. Measured ~1977 bytes against
+    // a 2331 cap at level M. The same plan does NOT fit at level H (cap 1273), which
+    // is why PLAN_ECC_LEVEL is a documented decision and not an implementation detail.
     expect(out.planBytes).toBeLessThan(MAX_QR_BYTES);
-    expect(out.headroom).toBeGreaterThan(0);
+    expect(out.planBytes).toBeGreaterThan(CAPACITY_BY_ECC.H);
   });
 });
 
