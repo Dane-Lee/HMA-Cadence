@@ -55,6 +55,20 @@ export const CAPACITY_BY_ECC = { L: 2953, M: 2331, Q: 1663, H: 1273 };
  * what you want for a code that will be folded, smudged and scanned in bad
  * light on a factory floor — but at H the payload must be slimmed first, which
  * reopens decision E12.
+ *
+ * **Re-measured 2026-08-28, after the Tracker's selection logic was rewritten to
+ * produce smaller, individualised plans.** The hope was that shorter plans would
+ * make a higher error-correction level affordable. They do not. Simulating 20,000
+ * realistic score sheets through the new logic gives a mean plan of 10 exercises
+ * (~1874 bytes):
+ *
+ *   L cap 2953 — 100%  of plans fit
+ *   M cap 2331 — 100%  of plans fit
+ *   Q cap 1663 —   6.2% of plans fit
+ *   H cap 1273 —   0.2% of plans fit
+ *
+ * So M is not a temporary compromise pending shorter plans; it is required.
+ * Anything above Q needs the payload slimmed, not the plan.
  */
 export const PLAN_ECC_LEVEL = 'M';
 
