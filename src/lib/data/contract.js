@@ -55,6 +55,29 @@
  * submitFeedback({ employeeId, assignmentId, rating })  → Promise<void>
  * reportPain({ employeeId, assignmentId, programId, category }) → Promise<void>
  *
+ * ── Return channel, phone side ────────────────────────────────
+ * See docs/return-payload-contract.md.
+ *
+ * fetchRecognitionKey() → Promise<string | null>
+ *   The device's stable identity in every report it sends. Null until minted;
+ *   this layer stores identity, it does not invent it.
+ * saveRecognitionKey(recognitionKey: string) → Promise<string>
+ *
+ * fetchLastReturnSentAt() → Promise<string | null>   // ISO, or never sent
+ * markReturnSent(at?: string) → Promise<string>
+ *
+ * fetchReturnEvents(employeeId: string)
+ *   → Promise<ReturnEvents>
+ *     ReturnEvents = { planId: string|null,
+ *                      completions: { e, d }[],        // e = source_exercise_id
+ *                      pain:        { e, d, c }[],
+ *                      feedback:    { e, d, v }[] }
+ *   The device's WHOLE history, not a delta — returns are cumulative so a
+ *   filtered or never-sent email self-heals on the next one. Events whose
+ *   assignment no longer exists are skipped, as they are in the compliance
+ *   views: re-ingesting a plan replaces its assignments and orphans cannot be
+ *   resolved back to an exercise.
+ *
  * ── Admin ───────────────────────────────────────────────────────────
  * fetchAdminEmployeeList()
  *   → Promise<AdminEmployee[]>     // sorted by name; role=employee, active only

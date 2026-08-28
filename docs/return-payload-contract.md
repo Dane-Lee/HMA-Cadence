@@ -100,7 +100,10 @@ forward into every later plan that employee receives.
 
 It cannot be derived from the plan key. A re-assessment mints a fresh plan key, and a return
 sent afterwards must still match the profile that already exists — the plan id changes, this
-does not. It is its own value, stored against the employee on the admin's machine.
+does not. It is its own value.
+
+**Who mints it is currently not what the plan specifies** — the phone does, not the admin,
+because there is no field in plan contract v1 to carry it the other way. See §7.
 
 ---
 
@@ -164,12 +167,33 @@ Duplicate blocks are dropped — a reply chain repeats the same block on every h
 |---|---|
 | Contract + validator | **built** — `returnValidation.js` |
 | Envelope build / open, keyId lookup | **built** — `returnEnvelope.js` |
-| Email composition + batch marker extraction | **built** — 19 tests |
-| Recognition key generation | **built** |
-| Phone: compose and hand off to the mail client | not built (Phase 6) |
+| Email composition + batch marker extraction | **built** |
+| Recognition key generation and device storage | **built** |
+| Phone: collect events, compose, `mailto:` hand-off | **built** — `composeReturn.js` + adapter |
+| Phone UI: the prompt after a pain tap, unsent indicator | not built |
 | Cadence-Admin: paste box, filing to the pain queue and compliance view | not built (Phase 6/7) |
-| Recognition key storage against an employee | not built |
 | Appointment-scan QR fallback | not built (Phase 7) |
+
+30 tests across `test/returnEnvelope.test.js` and `test/composeReturn.test.js`; the latter runs
+against the real `localAdapter`, so a completion recorded the way the app records it is the
+completion that reaches the payload.
+
+### Two gaps that need a decision, not code
+
+**The return address has nowhere to come from.** §4.2 of the pipeline plan has it "embedded in the
+client app from the original plan QR", but plan payload contract v1 carries no such field. Adding
+one changes a contract the Tracker also builds against, so `composeReturnEmail` takes the address as
+a parameter and `DEFAULT_RETURN_ADDRESS` is an empty placeholder.
+
+**The recognition key is minted by the phone, not the admin.** §4.2 has the admin mint it at first
+plan issue — which it cannot do for the same reason: no field to carry it. So the phone mints and
+persists its own, and the admin learns it from the first return, which it can match because it
+already knows which employee it issued that `keyId` to. Every later return matches on the
+recognition key directly, which is what makes it survive a re-assessment.
+
+The cost: an employee who reinstalls mints a new key and is re-linked by `keyId` one send later,
+rather than recognised immediately. If the plan contract later carries the key, prefer it and this
+becomes the fallback.
 
 ---
 

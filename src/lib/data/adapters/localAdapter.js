@@ -617,3 +617,92 @@ export async function resolvePain(reportId) {
   persist();
   return shapePainReport(p);
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Return channel (phone side)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * The device's recognition key — the employee's stable identity in every
+ * return they send. Stored on the device rather than against an employee row
+ * because a phone belongs to one person; see docs/return-payload-contract.md.
+ *
+ * Null until something mints one. Deliberately not minted here: this adapter
+ * stores, it does not invent identity.
+ */
+export async function fetchRecognitionKey() {
+  return store.device?.recognition_key ?? null;
+}
+
+export async function saveRecognitionKey(recognitionKey) {
+  if (!store.device) store.device = {};
+  store.device.recognition_key = recognitionKey;
+  persist();
+  return recognitionKey;
+}
+
+/** When the last return was handed to the mail client, or null if never. */
+export async function fetchLastReturnSentAt() {
+  return store.device?.return_sent_at ?? null;
+}
+
+export async function markReturnSent(at = new Date().toISOString()) {
+  if (!store.device) store.device = {};
+  store.device.return_sent_at = at;
+  persist();
+  return at;
+}
+
+/**
+ * Every event this device holds, as return-contract entries.
+ *
+ * Cumulative by design — the whole history every time, not a delta since the
+ * last send, so a filtered or never-sent email self-heals on the next one.
+ *
+ * Events are keyed by `source_exercise_id` (the public join key), not by the
+ * local assignment id, because the admin resolves them against its own library.
+ * A completion whose assignment no longer exists is skipped: re-ingesting a plan
+ * replaces its assignments, and an orphaned row can no longer be resolved to an
+ * exercise. Those rows are already ignored by the compliance views for the same
+ * reason.
+ */
+export async function fetchReturnEvents(employeeId) {
+  const libById = new Map(store.exercise_library.map((l) => [l.id, l.source_exercise_id]));
+  const sourceIdFor = (assignmentId) => {
+    const assignment = store.exercise_assignments.find((a) => a.id === assignmentId);
+    return assignment ? libById.get(assignment.exercise_library_id) ?? null : null;
+  };
+
+  const myCheckIns = new Map(
+    store.check_ins.filter((c) => c.employee_id === employeeId).map((c) => [c.id, c]),
+  );
+
+  const completions = [];
+  for (const row of store.exercise_completions) {
+    if (!row.completed) continue;
+    const checkIn = myCheckIns.get(row.check_in_id);
+    if (!checkIn) continue;
+    const e = sourceIdFor(row.exercise_assignment_id);
+    if (e) completions.push({ e, d: checkIn.date });
+  }
+
+  const pain = [];
+  for (const row of store.pain_reports) {
+    if (row.employee_id !== employeeId) continue;
+    const e = sourceIdFor(row.exercise_assignment_id);
+    if (e) pain.push({ e, d: row.reported_at.slice(0, 10), c: row.category });
+  }
+
+  const feedback = [];
+  for (const row of store.exercise_feedback) {
+    if (row.employee_id !== employeeId) continue;
+    const e = sourceIdFor(row.exercise_assignment_id);
+    if (e) feedback.push({ e, d: row.date, v: row.rating });
+  }
+
+  const program = store.programs.find(
+    (p) => p.employee_id === employeeId && p.status === 'active',
+  );
+
+  return { planId: program?.source_plan_id ?? null, completions, pain, feedback };
+}
