@@ -170,13 +170,23 @@ Duplicate blocks are dropped — a reply chain repeats the same block on every h
 | Email composition + batch marker extraction | **built** |
 | Recognition key generation and device storage | **built** |
 | Phone: collect events, compose, `mailto:` hand-off | **built** — `composeReturn.js` + adapter |
-| Phone UI: the prompt after a pain tap, unsent indicator | not built |
+| Phone UI: the prompt after a pain tap, unsent indicator, send action | **built** — `ReturnReportCard.jsx` + `sendReturn.js` |
 | Cadence-Admin: paste box, filing to the pain queue and compliance view | not built (Phase 6/7) |
 | Appointment-scan QR fallback | not built (Phase 7) |
 
-30 tests across `test/returnEnvelope.test.js` and `test/composeReturn.test.js`; the latter runs
-against the real `localAdapter`, so a completion recorded the way the app records it is the
-completion that reaches the payload.
+40 tests across `returnEnvelope`, `composeReturn` and `sendReturn`; the last two run against the
+real `localAdapter`, so a completion recorded the way the app records it is the completion that
+reaches the payload.
+
+### Sending is a hand-off, not a delivery
+
+`sendReturn()` opens a `mailto:`. The employee still has to press send in their own mail app, and
+nothing in Cadence can observe whether they did. Recording the hand-off is what stops the card
+nagging someone who has already done their part — **it is not a delivery receipt**, and the admin's
+own records are the only proof anything arrived.
+
+This is the second reason the payload is cumulative: if a hand-off never actually leaves, the next
+one carries the same events again and the gap closes itself.
 
 ### Two gaps that need a decision, not code
 

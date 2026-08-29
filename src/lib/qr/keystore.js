@@ -81,6 +81,32 @@ export async function getDeviceKey(keyIdHex) {
   }
 }
 
+/**
+ * The most recently paired key, or null. A report is encrypted to this one.
+ *
+ * `getDeviceKey` answers "which key opens this envelope", which is the right
+ * question when receiving. Sending is the other direction and has no envelope
+ * to read a keyId off, so it needs the current key instead — and after a
+ * re-assessment the current key is the newest, not the only one.
+ *
+ * Returns `keyId` as bytes as well as hex, because that is what the envelope
+ * encoder takes.
+ */
+export async function getLatestDeviceKey() {
+  const db = await openDb();
+  try {
+    const records = await tx(db, 'readonly', (store) => store.getAll());
+    if (!records?.length) return null;
+    const newest = records.reduce((a, b) => ((a.pairedAt ?? '') >= (b.pairedAt ?? '') ? a : b));
+    const keyId = Uint8Array.from(
+      newest.keyIdHex.match(/../g).map((byte) => parseInt(byte, 16)),
+    );
+    return { key: newest.key, keyIdHex: newest.keyIdHex, keyId };
+  } finally {
+    db.close();
+  }
+}
+
 /** True once this device has been paired at least once. Drives the "see your EIS rep" screen. */
 export async function hasAnyDeviceKey() {
   const db = await openDb();

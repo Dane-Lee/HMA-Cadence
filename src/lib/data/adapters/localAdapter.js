@@ -641,16 +641,29 @@ export async function saveRecognitionKey(recognitionKey) {
   return recognitionKey;
 }
 
-/** When the last return was handed to the mail client, or null if never. */
-export async function fetchLastReturnSentAt() {
-  return store.device?.return_sent_at ?? null;
+/**
+ * What was last handed to the mail client: when, and a fingerprint of the
+ * events it contained.
+ *
+ * The fingerprint rather than the timestamp is what decides whether there is
+ * anything new to send. Comparing dates cannot: events are dated to the day,
+ * so activity recorded an hour after a send looks no newer than the send
+ * itself. Comparing counts cannot either — completing one exercise and
+ * un-completing another leaves the count unchanged.
+ */
+export async function fetchReturnSendState() {
+  return {
+    sentAt: store.device?.return_sent_at ?? null,
+    signature: store.device?.return_sent_signature ?? null,
+  };
 }
 
-export async function markReturnSent(at = new Date().toISOString()) {
+export async function markReturnSent({ signature, at = new Date().toISOString() } = {}) {
   if (!store.device) store.device = {};
   store.device.return_sent_at = at;
+  store.device.return_sent_signature = signature ?? null;
   persist();
-  return at;
+  return { sentAt: at, signature: signature ?? null };
 }
 
 /**

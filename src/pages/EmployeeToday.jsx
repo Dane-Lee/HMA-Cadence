@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import ReturnReportCard from '../components/ReturnReportCard.jsx';
 import { useAuth } from '../lib/auth.jsx';
 import { MOVEMENT_CATEGORIES, PAIN_CATEGORIES, FEEDBACK_RATINGS } from '../lib/constants.js';
 import {
@@ -18,6 +19,12 @@ export default function EmployeeToday() {
   const [checkIn, setCheckIn] = useState(null);
   const [error, setError] = useState(null);
   const [showDoneBanner, setShowDoneBanner] = useState(false);
+  // Bumped whenever something reportable is recorded, so the report card
+  // re-reads instead of going stale behind a freshly completed exercise.
+  const [activityTick, setActivityTick] = useState(0);
+  // A pain report is the one event worth interrupting for -- it is the reason
+  // the practitioner would want to hear from someone before their next visit.
+  const [promptSendAfterPain, setPromptSendAfterPain] = useState(false);
 
   // expansion state — which card has the feedback/pain prompt open
   const [expandedFor, setExpandedFor] = useState(null); // assignmentId | null
@@ -119,6 +126,7 @@ export default function EmployeeToday() {
         completed: nextComplete,
       });
       setCheckIn((prev) => prev?.id ? prev : { ...(prev ?? {}), id: checkInId });
+      setActivityTick((tick) => tick + 1);
     } catch (err) {
       setError(err.message);
       load();
@@ -135,6 +143,7 @@ export default function EmployeeToday() {
     setTimeout(() => setFeedbackAckFor((cur) => (cur === assignment.assignmentId ? null : cur)), 1500);
     try {
       await submitFeedback({ employeeId: employee.id, assignmentId: assignment.assignmentId, rating });
+      setActivityTick((tick) => tick + 1);
     } catch (err) {
       setError(err.message);
       setFeedbackOverrides((m) => ({ ...m, [assignment.assignmentId]: prev }));
@@ -150,6 +159,8 @@ export default function EmployeeToday() {
         category,
       });
       setExpandedFor(null);
+      setActivityTick((tick) => tick + 1);
+      setPromptSendAfterPain(true);
     } catch (err) {
       setError(err.message);
     }
@@ -328,6 +339,13 @@ export default function EmployeeToday() {
           })}
         </section>
       ))}
+
+      <ReturnReportCard
+        autoPrompt={promptSendAfterPain}
+        employeeId={employee?.id}
+        onDismissPrompt={() => setPromptSendAfterPain(false)}
+        refreshKey={activityTick}
+      />
 
       {!allDone && done > 0 && (
         <a className="done-link" onClick={onEndEarly}>Done for today</a>

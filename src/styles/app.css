@@ -756,3 +756,27 @@
   font-size: .85rem;
   color: var(--text-secondary);
 }
+
+/* Return channel — the employee's "send your progress" card.
+   Quiet by default; only the post-pain prompt gets an accent edge, because
+   that is the one report worth interrupting someone for. */
+.report-card {
+  margin-top: 18px;
+}
+.report-card--prompt {
+  border-color: var(--accent);
+}
+.report-card__title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.report-card__body {
+  font-size: .9rem;
+  margin: 0;
+}
+.report-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}

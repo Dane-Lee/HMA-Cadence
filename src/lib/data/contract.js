@@ -63,8 +63,12 @@
  *   this layer stores identity, it does not invent it.
  * saveRecognitionKey(recognitionKey: string) → Promise<string>
  *
- * fetchLastReturnSentAt() → Promise<string | null>   // ISO, or never sent
- * markReturnSent(at?: string) → Promise<string>
+ * fetchReturnSendState() → Promise<{ sentAt: string|null, signature: string|null }>
+ * markReturnSent({ signature, at? }) → Promise<{ sentAt, signature }>
+ *   The signature, not the timestamp, decides whether anything new is waiting.
+ *   Dates cannot: events are dated to the day, so activity recorded an hour
+ *   after a send looks no newer than the send. Counts cannot either —
+ *   completing one exercise and un-completing another nets to zero.
  *
  * fetchReturnEvents(employeeId: string)
  *   → Promise<ReturnEvents>
