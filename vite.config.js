@@ -56,5 +56,12 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true,
+    // Vite denies unknown Host headers by default; bare IPs are allowed but DNS
+    // names are not. Device testing over Tailscale arrives as
+    // <machine>.<tailnet>.ts.net, which is how a phone gets a trusted HTTPS
+    // origin here — real cert, so service workers register and the PWA installs
+    // for real. A LAN IP over plain http cannot do either.
+    // `.ts.net` is reachable only from inside the tailnet, not the public internet.
+    allowedHosts: ['.ts.net'],
   },
 });

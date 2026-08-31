@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- Deliberately NO <link rel="manifest">. iOS uses a manifest's start_url when one is
+     present, which would launch this bookmark at "/" instead of here. Without it, adding
+     this page to the Home Screen pins THIS url, in standalone mode, on the same origin. -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Cadence storage check</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px 16px 48px;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #0a0a0a; color: #ededed;
+  }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+       color: #8d8d8d; margin: 24px 0 8px; font-weight: 600; }
+  .sub { color: #8d8d8d; font-size: 13px; margin: 0 0 20px; }
+  .card { background: #151515; border: 1px solid #262626; border-radius: 10px;
+          padding: 12px 14px; margin-bottom: 10px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+  .row span:first-child { color: #8d8d8d; }
+  .row span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .verdict { border-radius: 10px; padding: 14px; margin: 4px 0 18px; font-weight: 600; }
+  .v-shared    { background: #06281a; border: 1px solid #1c7f4e; color: #6ee7a8; }
+  .v-isolated  { background: #2b0f0f; border: 1px solid #8f2d2d; color: #ff9c9c; }
+  .v-unknown   { background: #1c1a06; border: 1px solid #7f6a1c; color: #e8d27a; }
+  button { -webkit-appearance: none; appearance: none; width: 100%;
+           background: #2563eb; color: #fff; border: 0; border-radius: 9px;
+           padding: 14px; font-size: 16px; font-weight: 600; margin: 6px 0; }
+  button.secondary { background: #262626; color: #ededed; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  ul { margin: 6px 0; padding-left: 18px; }
+  li { margin: 3px 0; }
+  .ok { color: #6ee7a8; } .bad { color: #ff9c9c; } .warn { color: #e8d27a; }
+  .empty { color: #6d6d6d; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>Cadence storage check</h1>
+<p class="sub">Does a Home Screen app share storage with Safari on this phone?</p>
+
+<div id="verdict" class="verdict v-unknown">Tap “Add a marker from here” to begin.</div>
+
+<button type="button" id="add">Add a marker from here</button>
+<button type="button" id="reload" class="secondary">Re-read storage</button>
+
+<h2>This context</h2>
+<div class="card" id="ctx"></div>
+
+<h2>Markers found — localStorage</h2>
+<div class="card" id="ls"></div>
+
+<h2>Markers found — IndexedDB</h2>
+<div class="card" id="idb"></div>
+
+<h2>Cadence's real data on this origin</h2>
+<div class="card" id="real"></div>
+
+<button type="button" id="clear" class="secondary">Clear markers (this context)</button>
+
+<script>
+const LS_KEY  = 'hma-storage-check:markers';
+const IDB_DB  = 'hma-storage-check';
+const IDB_STORE = 'markers';
+
+// Standalone detection: iOS sets navigator.standalone; the media query is the
+// cross-browser one. Either being true means we are NOT in a normal tab.
+const isStandalone =
+  window.navigator.standalone === true ||
+  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+const CTX = isStandalone ? 'HOME SCREEN' : 'SAFARI TAB';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------- localStorage ---------- */
+function lsRead() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return { error: e.name || String(e) }; }
+}
+function lsAdd(entry) {
+  try {
+    const cur = lsRead();
+    const list = Array.isArray(cur) ? cur : [];
+    list.push(entry);
+    localStorage.setItem(LS_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) { return e.name || String(e); }
+}
+
+/* ---------- IndexedDB ---------- */
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    let req;
+    try { req = indexedDB.open(IDB_DB, 1); }
+    catch (e) { return reject(e); }
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    // Safari in some states never fires either event; do not hang the page.
+    setTimeout(() => reject(new Error('timeout')), 3000);
+  });
+}
+async function idbRead() {
+  try {
+    const db = await idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) { return { error: e.message || e.name || String(e) }; }
+}
+async function idbAdd(entry) {
+  try {
+    const db = await idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).add(entry);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) { return e.message || e.name || String(e); }
+}
+
+/* ---------- rendering ---------- */
+function renderCtx() {
+  const sw = ('serviceWorker' in navigator) ? 'available' : 'unavailable';
+  $('ctx').innerHTML = `
+    <div class="row"><span>Running as</span><span><b>${CTX}</b></span></div>
+    <div class="row"><span>Origin</span><span class="mono">${esc(location.origin)}</span></div>
+    <div class="row"><span>Path</span><span class="mono">${esc(location.pathname)}</span></div>
+    <div class="row"><span>Secure context</span><span>${window.isSecureContext ? '<span class="ok">yes</span>' : '<span class="warn">no (http)</span>'}</span></div>
+    <div class="row"><span>Service worker API</span><span>${sw}</span></div>
+    <div class="row"><span>navigator.standalone</span><span class="mono">${String(window.navigator.standalone)}</span></div>
+  `;
+}
+
+function markerList(entries) {
+  if (entries && entries.error) return `<span class="bad">unavailable — ${esc(entries.error)}</span>`;
+  if (!entries || entries.length === 0) return '<span class="empty">none found</span>';
+  return '<ul>' + entries.map(e => {
+    const from = e.ctx === CTX ? '' : ' ← <b class="ok">other context</b>';
+    return `<li><span class="mono">${esc(e.ctx)}</span> at ${esc(e.at)}${from}</li>`;
+  }).join('') + '</ul>';
+}
+
+function verdict(lsEntries, idbEntries) {
+  const all = []
+    .concat(Array.isArray(lsEntries) ? lsEntries : [])
+    .concat(Array.isArray(idbEntries) ? idbEntries : []);
+  if (all.length === 0) {
+    return ['v-unknown', 'No markers yet. Tap “Add a marker from here”, then repeat in the other context.'];
+  }
+  const contexts = new Set(all.map(e => e.ctx));
+  if (contexts.size > 1) {
+    return ['v-shared',
+      'SHARED — markers written in Safari and on the Home Screen are both visible here. ' +
+      'A plan scanned in Safari would be found by the installed app.'];
+  }
+  if (contexts.has(CTX) && contexts.size === 1) {
+    return ['v-unknown',
+      `Only ${CTX} markers so far. Add one from the OTHER context, come back, and re-read.`];
+  }
+  return ['v-unknown', 'Inconclusive — re-read storage.'];
+}
+
+async function render() {
+  renderCtx();
+  const lsEntries = lsRead();
+  const idbEntries = await idbRead();
+  $('ls').innerHTML = markerList(lsEntries);
+  $('idb').innerHTML = markerList(idbEntries);
+
+  // Cadence's own keys, on this exact origin and jar.
+  let realHtml = '';
+  try {
+    const db = localStorage.getItem('hma-cadence:local-db');
+    let summary = '<span class="empty">not present</span>';
+    if (db) {
+      let n = '?';
+      try { const p = JSON.parse(db); n = Array.isArray(p?.employees) ? p.employees.length : '?'; } catch {}
+      summary = `<span class="ok">present</span> — ${db.length.toLocaleString()} bytes, employees: ${n}`;
+    }
+    const keyish = Object.keys(localStorage).filter(k => /cadence|hma/i.test(k));
+    realHtml =
+      `<div class="row"><span>hma-cadence:local-db</span><span>${summary}</span></div>` +
+      `<div class="row"><span>Other hma/cadence keys</span><span class="mono">${keyish.length ? esc(keyish.join(', ')) : '<span class="empty">none</span>'}</span></div>`;
+  } catch (e) {
+    realHtml = `<span class="bad">localStorage unavailable — ${esc(e.name || e)}</span>`;
+  }
+  $('real').innerHTML = realHtml;
+
+  const [cls, text] = verdict(lsEntries, idbEntries);
+  const v = $('verdict');
+  v.className = 'verdict ' + cls;
+  v.textContent = text;
+}
+
+$('add').addEventListener('click', async () => {
+  const entry = { ctx: CTX, at: new Date().toLocaleString() };
+  const lsRes = lsAdd(entry);
+  const idbRes = await idbAdd(entry);
+  if (lsRes !== true) alert('localStorage write failed: ' + lsRes);
+  if (idbRes !== true) alert('IndexedDB write failed: ' + idbRes);
+  render();
+});
+
+$('reload').addEventListener('click', render);
+
+$('clear').addEventListener('click', async () => {
+  try { localStorage.removeItem(LS_KEY); } catch {}
+  try {
+    const db = await idbOpen();
+    await new Promise((res) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).clear();
+      tx.oncomplete = res; tx.onerror = res;
+    });
+  } catch {}
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
