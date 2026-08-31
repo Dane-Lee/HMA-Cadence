@@ -120,6 +120,22 @@
   font-size: .9rem;
 }
 
+/* Shown only in a Home Screen install that has never been paired — iOS keeps
+   that copy's storage separate from Safari's, so it can never see a plan
+   scanned with the camera. */
+.login-card .install-notice {
+  margin: 16px 0 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: .85rem;
+  line-height: 1.45;
+}
+.login-card .install-notice strong { display: block; margin-bottom: 4px; }
+.login-card .install-notice p { margin: 6px 0 0; font-size: .85rem; }
+.login-card .install-notice p:last-child { margin-bottom: 0; }
+
 /* ── Employee Today page ─────────────────────────────── */
 .today-greeting {
   margin-bottom: 4px;

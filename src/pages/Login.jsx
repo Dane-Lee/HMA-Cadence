@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
+import StandaloneEmptyNotice from '../components/StandaloneEmptyNotice.jsx';
 
 export default function Login() {
   const { signIn, loading } = useAuth();
@@ -35,6 +36,8 @@ export default function Login() {
             </div>
           </div>
         </div>
+
+        <StandaloneEmptyNotice />
 
         <h1>Sign in</h1>
         <p className="muted">Use your work ID and the PIN you set up.</p>
