@@ -16,6 +16,19 @@ import * as adapter from '../src/lib/data/adapters/localAdapter.js';
 
 const ADDRESS = 'eis@example.com';
 
+/**
+ * A fixed seed date, so the suite does not depend on what day it is run.
+ *
+ * The seed completes exercises on the employee's `completeWeekdays` from this
+ * week's Monday through today inclusive. Run on a day the seeded employee
+ * completes on, the exercise a test toggles is *already* complete and dated
+ * today, the toggle is a no-op, and the assertion fails — which is exactly what
+ * happened on Monday 2026-08-31 after passing on Sunday 2026-08-30. Pinning the
+ * seed to a Friday in a past week keeps a full Mon-Fri of real history while
+ * guaranteeing none of it is dated today.
+ */
+const SEED_NOW = new Date('2026-06-05T12:00:00Z');
+
 /** The build-time return address, which `returnAddress()` reads. */
 function setAddress(value) {
   import.meta.env.VITE_RETURN_ADDRESS = value;
@@ -43,7 +56,7 @@ async function recordSomething() {
 
 describe('prepareReturn status', () => {
   beforeEach(async () => {
-    adapter.resetLocalDb();
+    adapter.resetLocalDb(SEED_NOW);
     await clearDeviceKeys();
     setAddress(ADDRESS);
   });
@@ -109,7 +122,7 @@ describe('prepareReturn status', () => {
 
 describe('sendReturn', () => {
   beforeEach(async () => {
-    adapter.resetLocalDb();
+    adapter.resetLocalDb(SEED_NOW);
     await clearDeviceKeys();
     setAddress(ADDRESS);
   });

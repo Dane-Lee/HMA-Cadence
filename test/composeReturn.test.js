@@ -30,6 +30,19 @@ import {
 
 const RECOGNITION = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
 
+/**
+ * A fixed seed date, so the suite does not depend on what day it is run.
+ *
+ * The seed completes exercises on the employee's `completeWeekdays` from this
+ * week's Monday through today inclusive. Run on a day the seeded employee
+ * completes on, the exercise a test toggles is *already* complete and dated
+ * today, the toggle is a no-op, and the assertion fails — which is exactly what
+ * happened on Monday 2026-08-31 after passing on Sunday 2026-08-30. Pinning the
+ * seed to a Friday in a past week keeps a full Mon-Fri of real history while
+ * guaranteeing none of it is dated today.
+ */
+const SEED_NOW = new Date('2026-06-05T12:00:00Z');
+
 async function newKey() {
   const rawKey = generatePlanKey();
   return { keyId: await keyIdFor(rawKey), key: await importPlanKey(rawKey, { extractable: true }) };
@@ -137,7 +150,7 @@ describe('composeReturnEmail', () => {
 
 describe('ensureRecognitionKey', () => {
   beforeEach(() => {
-    resetLocalDb();
+    resetLocalDb(SEED_NOW);
   });
 
   it('mints one on first use and reuses it forever after', async () => {
@@ -153,7 +166,7 @@ describe('ensureRecognitionKey', () => {
 
 describe('fetchReturnEvents, against the real adapter', () => {
   beforeEach(() => {
-    resetLocalDb();
+    resetLocalDb(SEED_NOW);
   });
 
   it('turns what the app recorded into contract events keyed by exercise id', async () => {

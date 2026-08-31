@@ -53,9 +53,18 @@ function persist(next = store) {
 // Write the (possibly freshly-seeded) store back on first run.
 persist();
 
-/** Rebuild the fictional dataset from scratch. Handy for demos/dev. */
-export function resetLocalDb() {
-  store = buildSeedDb();
+/**
+ * Rebuild the fictional dataset from scratch. Handy for demos/dev.
+ *
+ * `now` exists for tests. The seed is calendar-relative — it lays down this
+ * week's completions from Monday through `now` inclusive — so a test that
+ * records a completion of its own collides with the seed whenever the real
+ * weekday happens to be one the seeded employee completes on. Pinning `now` to
+ * a date in a past week keeps the seeded history without ever dating any of it
+ * today. Omit it and the seed follows the real clock, as the app needs.
+ */
+export function resetLocalDb(now) {
+  store = buildSeedDb(now);
   persist();
 }
 
