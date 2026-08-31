@@ -38,7 +38,8 @@ export default function ScanPlan() {
   if (state.phase === 'no_code') {
     return (
       <StatusCard title="Nothing to open">
-        <p>Scan the code on your printed exercise sheet with your camera.</p>
+        <p>Scan the code on your printed exercise sheet.</p>
+        <Link className="btn" to="/scan">Scan my sheet</Link>
         <Link className="btn" to={employee ? '/today' : '/login'}>
           {employee ? 'Go to my exercises' : 'Sign in'}
         </Link>

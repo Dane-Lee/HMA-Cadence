@@ -95,11 +95,18 @@ export default function PairDevice() {
           )}
         </>
       ) : (
-        <p>
-          {state.planFailed
-            ? 'Your device is set up, but the plan you scanned couldn’t be loaded. Scan the code on your sheet again.'
-            : 'Scan the code on your exercise sheet and your plan will open here.'}
-        </p>
+        <>
+          <p>
+            {state.planFailed
+              ? 'Your device is set up, but the plan you scanned couldn’t be loaded. Scan the code on your sheet again.'
+              : 'Now scan the plan code on your exercise sheet and it will open here.'}
+          </p>
+          {/* The device is paired but has no plan, and this screen used to tell
+              the employee to scan without giving them anything to scan with. On
+              an iOS Home Screen install the phone's camera app is not an option
+              — a code it opens lands in Safari, in a different storage jar. */}
+          <Link className="btn" to="/scan">Scan my plan code</Link>
+        </>
       )}
 
       <p className="pair-keyid">

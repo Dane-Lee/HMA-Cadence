@@ -12,6 +12,7 @@ import AdminPainQueue from './pages/AdminPainQueue.jsx';
 import AdminImportPlan from './pages/AdminImportPlan.jsx';
 import PairDevice from './pages/PairDevice.jsx';
 import ScanPlan from './pages/ScanPlan.jsx';
+import ScanCode from './pages/ScanCode.jsx';
 import './styles/app.css';
 
 function RequireAuth({ children, role }) {
@@ -52,6 +53,10 @@ export default function App() {
           account yet — the receiver creates it when the plan is applied. */}
       <Route path="/pair" element={<PairDevice />} />
       <Route path="/plan" element={<ScanPlan />} />
+      {/* In-app scanner. Public for the same reason as /pair and /plan: on iOS a
+          Home Screen install cannot see a code scanned by the phone's camera, so
+          this is the only way in for an installed app, account or not. */}
+      <Route path="/scan" element={<ScanCode />} />
       <Route
         path="/set-pin"
         element={

@@ -16,22 +16,50 @@
  * (An unopenable plan is persisted separately, as ciphertext — see pending.js.)
  */
 
-const ROUTE_FOR = { k: '/pair', p: '/plan' };
+export const ROUTE_FOR = { k: '/pair', p: '/plan' };
 
 let captured = null;
+
+/**
+ * Pull `{kind, data}` out of a scanned string, or null.
+ *
+ * Accepts both the bare fragment this file has always handled (`#p=…`) and the
+ * whole URL a QR actually encodes (`https://host/#p=…`), because the in-app
+ * scanner reads the printed code directly rather than being navigated to it.
+ *
+ * The host is deliberately not checked. A plan envelope is authenticated and
+ * sealed to a device key, so a code pointing somewhere else cannot do anything
+ * here beyond failing to open — and rejecting on host would break the moment
+ * the deployment moves.
+ */
+export function parseQrPayload(text) {
+  const match = /#(k|p)=([A-Za-z0-9_-]+)$/.exec(String(text ?? '').trim());
+  if (!match) return null;
+  return { kind: match[1], data: match[2] };
+}
+
+/**
+ * Hand a payload to the handling routes without a page load. Used by the
+ * in-app scanner: on iOS a Home Screen install has its own storage, so a code
+ * scanned by the phone's camera opens in Safari and lands in the wrong copy.
+ * Scanning inside the app keeps the key and the plan in one place.
+ */
+export function setQrPayload(payload) {
+  captured = payload;
+  return payload;
+}
 
 export function captureQrFragment() {
   if (typeof window === 'undefined') return null;
 
-  const match = /^#(k|p)=([A-Za-z0-9_-]+)$/.exec(window.location.hash);
-  if (!match) return null;
+  const parsed = parseQrPayload(window.location.hash);
+  if (!parsed) return null;
 
-  const [, kind, data] = match;
-  captured = { kind, data };
+  captured = parsed;
 
   // Strip the payload and land on the handling route in one replace, so the
   // fragment never enters the history stack.
-  window.history.replaceState(null, '', ROUTE_FOR[kind] + window.location.search);
+  window.history.replaceState(null, '', ROUTE_FOR[parsed.kind] + window.location.search);
   return captured;
 }
 

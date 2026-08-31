@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { hasAnyDeviceKey } from '../lib/qr/keystore.js';
 
 /**
@@ -58,8 +59,9 @@ export default function StandaloneEmptyNotice() {
         there. This icon opens a separate copy that cannot see it.
       </p>
       <p>
-        Open Cadence in <strong>Safari</strong> to reach your exercises.
+        Scan your sheet here instead, or open Cadence in <strong>Safari</strong>.
       </p>
+      <Link className="btn" to="/scan">Scan my sheet</Link>
     </div>
   );
 }
