@@ -163,4 +163,11 @@ export const DATA_LAYER_FUNCTIONS = [
   'acknowledgePain',
   'resolvePain',
   'ingestPlan',
+  // Issued plan keys. The phone encrypts its return with the plan key it was
+  // paired with, so the admin can only open a return for a key it kept.
+  'recordIssuedPlanKey',
+  'fetchIssuedPlanKey',
+  'listIssuedPlanKeys',
+  'bindRecognitionKey',
+  'fetchByRecognitionKey',
 ];

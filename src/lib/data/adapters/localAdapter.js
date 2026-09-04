@@ -728,3 +728,103 @@ export async function fetchReturnEvents(employeeId) {
 
   return { planId: program?.source_plan_id ?? null, completions, pain, feedback };
 }
+
+
+/* ============================================================================
+ * Issued plan keys
+ *
+ * WHY THIS EXISTS. The phone encrypts its return with the plan key it was
+ * paired with (`sendReturn.js` -> `getLatestDeviceKey()`), tagged with that
+ * key's 4-byte keyId. The admin therefore cannot open a single return unless it
+ * kept the key it issued. Nothing kept it: `buildPlanQr()` returns `keyId` and
+ * `keyB64` and every caller dropped them on the floor.
+ *
+ * That makes this a hard dependency of BOTH ends of the return channel -- the
+ * issue page that mints a key, and the paste box that opens what comes back --
+ * which is why it is its own piece rather than part of either.
+ *
+ * ON KEEPING RAW KEYS. These are stored unwrapped, because the admin must be
+ * able to decrypt a return that arrives weeks later with no employee present.
+ * There is no key-escrow service to lean on: no cloud is the whole design. So
+ * the admin's browser storage is as sensitive as its assessment records, and
+ * that is a property of the estate, not something this store invents.
+ *
+ * RECOGNITION KEY. A first return is matched by `keyId`, because the admin knows
+ * who it issued that key to; the recognition key inside the payload is then
+ * bound to the same record. Later returns match on the recognition key
+ * directly, which is what lets a re-assessment mint a new plan key without
+ * losing the thread. See `composeReturn.js` for the phone half.
+ * ========================================================================== */
+
+function issuedKeys() {
+  // Databases seeded before this existed have no collection; treat a missing
+  // one as empty rather than throwing on read.
+  if (!Array.isArray(store.issuedPlanKeys)) store.issuedPlanKeys = [];
+  return store.issuedPlanKeys;
+}
+
+export async function recordIssuedPlanKey({
+  keyId,
+  keyB64,
+  planId = null,
+  employeeNumber = null,
+  employeeName = null,
+  issuedAt = new Date().toISOString(),
+} = {}) {
+  if (!keyId || !keyB64) throw new Error('recordIssuedPlanKey needs keyId and keyB64.');
+
+  const rows = issuedKeys();
+  const existing = rows.find((r) => r.keyId === keyId);
+  if (existing) {
+    // Re-issuing the same keyId means the same key: refresh who it went to,
+    // never clobber a recognition key already learned from a return.
+    existing.keyB64 = keyB64;
+    existing.planId = planId ?? existing.planId;
+    existing.employeeNumber = employeeNumber ?? existing.employeeNumber;
+    existing.employeeName = employeeName ?? existing.employeeName;
+    existing.issuedAt = issuedAt;
+    persist();
+    return { ...existing };
+  }
+
+  const row = {
+    keyId,
+    keyB64,
+    planId,
+    employeeNumber,
+    employeeName,
+    issuedAt,
+    recognitionKey: null,
+    lastReturnAt: null,
+  };
+  rows.push(row);
+  persist();
+  return { ...row };
+}
+
+export async function fetchIssuedPlanKey(keyId) {
+  const row = issuedKeys().find((r) => r.keyId === keyId);
+  return row ? { ...row } : null;
+}
+
+export async function listIssuedPlanKeys() {
+  return issuedKeys().map((r) => ({ ...r }));
+}
+
+export async function bindRecognitionKey({ keyId, recognitionKey, seenAt = new Date().toISOString() } = {}) {
+  const row = issuedKeys().find((r) => r.keyId === keyId);
+  if (!row) return null;
+
+  // A reinstall mints a new recognition key and the admin re-links it by keyId
+  // on the next return. Overwriting is therefore correct, not a conflict.
+  row.recognitionKey = recognitionKey ?? row.recognitionKey;
+  row.lastReturnAt = seenAt;
+  persist();
+  return { ...row };
+}
+
+export async function fetchByRecognitionKey(recognitionKey) {
+  if (!recognitionKey) return null;
+  const row = issuedKeys().find((r) => r.recognitionKey === recognitionKey);
+  return row ? { ...row } : null;
+}
