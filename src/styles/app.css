@@ -876,3 +876,24 @@
 .import-input:focus { outline: none; border-color: var(--accent); }
 .field-label { display: block; margin: 16px 0 6px; font-weight: 600; font-size: 14px; }
 .field-hint { margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #666); }
+
+/* ---- Progress reports (the return paste box) ---------------------------- */
+.returns-list { list-style: none; margin: 12px 0 0; padding: 0; }
+.returns-item {
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border-left: 3px solid var(--border, #d5d5d5);
+  background: var(--surface-muted, rgba(0, 0, 0, .03));
+}
+.returns-item--opened { border-left-color: var(--accent, #2f7d5d); }
+/* Everything that is not "opened" needs the admin to do something, so they all
+   read the same way rather than each inventing a colour. */
+.returns-item--unknown_key,
+.returns-item--unreadable,
+.returns-item--not_a_return,
+.returns-item--malformed { border-left-color: #8a6d3b; }
+.returns-item__head { font-size: 15px; }
+.returns-item__who { opacity: .75; }
+.returns-item__counts { margin-top: 6px; font-size: 14px; }
+.returns-pain { color: #b3261e; }

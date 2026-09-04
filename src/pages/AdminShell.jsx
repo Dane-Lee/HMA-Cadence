@@ -15,6 +15,7 @@ export default function AdminShell({ children }) {
           <NavLink to="/admin" end>Employees</NavLink>
           <NavLink to="/admin/pain">Pain Queue</NavLink>
           <NavLink to="/admin/issue">Issue</NavLink>
+          <NavLink to="/admin/returns">Reports</NavLink>
           <NavLink to="/admin/import">Import</NavLink>
         </nav>
 

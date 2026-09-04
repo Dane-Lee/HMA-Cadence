@@ -11,6 +11,7 @@ import AdminEmployeeDetail from './pages/AdminEmployeeDetail.jsx';
 import AdminPainQueue from './pages/AdminPainQueue.jsx';
 import AdminImportPlan from './pages/AdminImportPlan.jsx';
 import AdminIssuePlan from './pages/AdminIssuePlan.jsx';
+import AdminReturns from './pages/AdminReturns.jsx';
 import PairDevice from './pages/PairDevice.jsx';
 import ScanPlan from './pages/ScanPlan.jsx';
 import ScanCode from './pages/ScanCode.jsx';
@@ -134,6 +135,16 @@ export default function App() {
           <RequireAuth role="admin">
             <AdminShell>
               <AdminIssuePlan />
+            </AdminShell>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin/returns"
+        element={
+          <RequireAuth role="admin">
+            <AdminShell>
+              <AdminReturns />
             </AdminShell>
           </RequireAuth>
         }
