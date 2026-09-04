@@ -21,6 +21,7 @@ import {
   encodePlanEnvelope,
   parsePlanEnvelope,
   decryptPlanEnvelope,
+  toKeyIdHex,
 } from '../qr/envelope.js';
 import {
   RECOGNITION_KEY_BYTES,
@@ -113,7 +114,7 @@ export function returnKeyId(encoded) {
   if (keyId.length !== KEY_ID_BYTES) {
     throw new EnvelopeError('malformed', `keyId must be ${KEY_ID_BYTES} bytes.`);
   }
-  return Array.from(keyId, (b) => b.toString(16).padStart(2, '0')).join('');
+  return toKeyIdHex(keyId);
 }
 
 function wrap(text, columns = WRAP_COLUMNS) {

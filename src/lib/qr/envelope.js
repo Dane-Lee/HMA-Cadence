@@ -83,6 +83,20 @@ export async function keyIdFor(rawKey) {
 }
 
 /**
+ * The keyId as lowercase hex — the form it is stored and looked up in.
+ *
+ * `keyIdFor` returns bytes and `returnKeyId` returns hex, and the admin has to
+ * match one against the other: it stores what it issued, then looks that up by
+ * the id parsed off a returned envelope. Storing the raw Uint8Array serialises to
+ * `{"0":206,"1":167,…}` in localStorage and never matches the hex string, which
+ * is a mismatch that only surfaces when a real report comes back weeks later.
+ * One helper, used by both sides, is what stops that.
+ */
+export function toKeyIdHex(bytes) {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Import raw key bytes as an AES-GCM CryptoKey.
  *
  * Cadence imports with extractable=false so no script on the phone can read the
