@@ -4,6 +4,8 @@ import QRCode from 'qrcode';
 import { buildPlanQr, PLAN_ECC_LEVEL, MAX_QR_BYTES, PlanQrError } from '../lib/qr/planQr.js';
 import { toKeyIdHex } from '../lib/qr/envelope.js';
 import { recordIssuedPlanKey } from '../lib/queries.js';
+import { renderSheetCodes } from '../lib/sheet/planSheet.js';
+import PlanSheet from '../components/PlanSheet.jsx';
 
 /* Where the employee's phone lands when it scans the plan code.
  *
@@ -42,13 +44,15 @@ export default function AdminIssuePlan() {
   const [baseUrl, setBaseUrl] = useState(defaultBaseUrl);
   const [issued, setIssued] = useState(null);
   const [codes, setCodes] = useState(null);
+  const [sheet, setSheet] = useState(null);
   const [errors, setErrors] = useState(null);
   const [error, setError] = useState(null);
   const [tooLarge, setTooLarge] = useState(null);
   const [busy, setBusy] = useState(false);
 
   function reset() {
-    setIssued(null); setCodes(null); setErrors(null); setError(null); setTooLarge(null);
+    setIssued(null); setCodes(null); setSheet(null);
+    setErrors(null); setError(null); setTooLarge(null);
   }
 
   async function onIssue() {
@@ -86,13 +90,19 @@ export default function AdminIssuePlan() {
         employeeName: displayName(payload.employee),
       });
 
-      const [pairImg, planImg] = await Promise.all([
+      /* Two renderings of the same two URLs, which is deliberate rather than
+       * wasteful: the screen pair is raster at a fixed pixel size because it is
+       * scanned off a monitor, and the sheet's pair is SVG because 110mm on
+       * paper has to be a measurement and not a dpi assumption. */
+      const [pairImg, planImg, sheetCodes] = await Promise.all([
         renderQr(result.pairUrl),
         renderQr(result.planUrl),
+        renderSheetCodes(result),
       ]);
 
       setIssued(result);
       setCodes({ pairImg, planImg });
+      setSheet({ payload, codes: sheetCodes, keyIdHex });
     } catch (err) {
       if (err instanceof PlanQrError && err.code === 'too_large') {
         setTooLarge({ message: err.message, detail: err.detail ?? {} });
@@ -116,10 +126,11 @@ export default function AdminIssuePlan() {
       </p>
 
       <div className="import-note">
-        <strong>Two codes, and the order matters.</strong> The employee scans the{' '}
-        <strong>pairing code first</strong> — it carries the key — then the{' '}
-        <strong>plan code</strong>, which is encrypted with it. Scanning them the other way round
-        gives them a plan their phone cannot open.
+        <strong>Two codes, and the order is the smooth path — not a trap.</strong> The employee
+        scans the <strong>pairing code first</strong> — it carries the key — then the{' '}
+        <strong>plan code</strong>, which is encrypted with it. Scanned the other way round the
+        phone <em>holds</em> the plan and opens it the moment the pairing code arrives, so a
+        wrong-order scan never needs a reprint.
       </div>
 
       <label className="field-label" htmlFor="issue-base-url">Where the phone lands</label>
@@ -203,12 +214,27 @@ export default function AdminIssuePlan() {
             </div>
           </dl>
 
+          <div className="import-actions">
+            <button className="btn btn-inline" onClick={() => window.print()}>
+              Print the sheet
+            </button>
+          </div>
+
           <p className="field-hint">
             The key is stored on this machine so a returned progress report can be opened later.
             It is not recoverable from the printed sheet alone, so re-issuing a lost plan means
             issuing a new pairing code too.
           </p>
         </div>
+      )}
+
+      {sheet && issued && (
+        <PlanSheet
+          payload={sheet.payload}
+          codes={sheet.codes}
+          issued={issued}
+          keyIdHex={sheet.keyIdHex}
+        />
       )}
     </>
   );
