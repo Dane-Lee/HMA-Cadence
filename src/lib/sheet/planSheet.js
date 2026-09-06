@@ -140,13 +140,18 @@ export function sheetExercises(payload) {
  * **Nothing here mentions installing the app or adding it to the home screen**,
  * and that is the one instruction most likely to be added back by someone
  * reading the older plan text (decisions B1 and E2 both say "install steps").
- * Two reasons it is wrong now. The codes are ordinary URLs, so the phone camera
- * opens them in the browser and no install ever happens. And storage is
- * per-browser: a plan scanned in Safari lives in Safari, so an employee who
- * installs first and scans second can end up with an empty app and a plan they
- * cannot reach -- open item 1 in PIPELINE-WORKFLOW-PLAN.md, still unverified on
- * a real iPhone. Until somebody has tested that on hardware, the sheet asks for
- * the one path that is known to work.
+ *
+ * It is wrong for two reasons, and the second is settled rather than cautious.
+ * The codes are ordinary URLs, so the phone camera opens them in the browser and
+ * no install ever happens. And **a Home Screen web app does not share storage
+ * with Safari** -- not localStorage, not IndexedDB, verified in both directions
+ * on the owner's own iPhone on 2026-08-31 against a real trusted-cert HTTPS
+ * origin, so it was a genuine install and not a failed write. A scanned QR opens
+ * in Safari, so an employee who installs first would be looking at a permanently
+ * empty app with their plan sitting in a browser they were told not to use, and
+ * nothing in the product can move it across.
+ *
+ * So the sheet asks for the browser path, which is the only one that works.
  */
 export const SHEET_STEPS = Object.freeze([
   Object.freeze({
