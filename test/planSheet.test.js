@@ -133,6 +133,15 @@ describe('the printed sheet: what it tells the employee', () => {
     expect(words).toContain('nothing to install');
   });
 
+  it('names the in-app scanner as the fallback for the plan code', () => {
+    /* 2026-09-06, first print test on the owner's iPhone: the Camera app read
+     * the pairing code and did not register the plan code at all. The in-app
+     * scanner had already decoded both on 08-31. The sheet must send the
+     * employee there, and must say it on the plan-code step, not in a footnote. */
+    expect(SHEET_STEPS[1].body).toContain('Scan my sheet');
+    expect(SHEET_STEPS[1].body.toLowerCase()).toContain('does not react');
+  });
+
   it('says the wrong scan order is recoverable, because it is', () => {
     /* applyPlanEnvelope saves an unopenable plan and PairDevice drains it. A
      * sheet that threatened the opposite would cause reprints for nothing. */

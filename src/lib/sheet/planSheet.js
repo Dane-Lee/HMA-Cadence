@@ -131,6 +131,17 @@ export function sheetExercises(payload) {
  * **Pairing first, plan second** -- that is the smooth path, and it is what the
  * sheet asks for.
  *
+ * **The second step names the in-app scanner as the fallback, and that is a
+ * measured decision, not a hedge.** First print test, 2026-09-06, the owner's
+ * iPhone: the 55mm pairing code decoded in the Camera app; the 110mm plan code
+ * (version 30, 0.76mm modules -- well above the 0.5mm floor) did not register
+ * as a QR at all. Module size was not the limit; density was -- iOS Camera is
+ * unreliable on codes this dense, and real plans run to version 40. The in-app
+ * scanner (/scan, jsQR at full video resolution) was device-tested on the same
+ * phone on 2026-08-31 and decoded both codes. So the sheet sends the employee
+ * to the thing that works, in the order that gets them there: code 1 opens the
+ * page, and the page has the scanner.
+ *
  * **But the wrong order is not a failure**, and the sheet must not say it is.
  * `applyPlanEnvelope` saves an unopenable plan as a pending envelope and
  * `PairDevice` drains it the moment the key arrives; holding a plan scanned
@@ -162,7 +173,10 @@ export const SHEET_STEPS = Object.freeze([
   }),
   Object.freeze({
     title: 'Point it at the second code',
-    body: 'This is your exercise program. It opens on the same page.',
+    body:
+      'This is your exercise program. It opens on the same page. If your camera ' +
+      'does not react to this one, go back to the page the first code opened and ' +
+      'tap “Scan my sheet” — that scanner reads it.',
   }),
   Object.freeze({
     title: 'Write down the PIN it shows you',
