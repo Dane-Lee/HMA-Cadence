@@ -41,9 +41,21 @@ function sheetCss() {
   return APP_CSS.slice(start);
 }
 
+/* Fixed key and IV, so the committed file is byte-stable.
+ *
+ * The first version minted a fresh key on every run, which meant every
+ * `npm test` -- including the one inside STATUS.md's regeneration -- rewrote
+ * the two QR codes and left docs/sample-plan-sheet.html dirty on whichever
+ * machine ran it. A sample that opens nothing anywhere (fake employee, fake
+ * host, key recorded in no issued-key store) loses nothing by having a public
+ * key; it gains a file that only changes when the sheet itself changes, which
+ * is exactly the diff worth seeing. */
+const SAMPLE_KEY = Uint8Array.from({ length: 32 }, (_, i) => (i * 7 + 3) & 0xff);
+const SAMPLE_IV = Uint8Array.from({ length: 12 }, (_, i) => (i * 13 + 5) & 0xff);
+
 async function renderSample() {
   const payload = structuredClone(SAMPLE);
-  const issued = await buildPlanQr(payload, { baseUrl: BASE });
+  const issued = await buildPlanQr(payload, { baseUrl: BASE, iv: SAMPLE_IV, rawKey: SAMPLE_KEY });
   const codes = await renderSheetCodes(issued);
   const body = renderToStaticMarkup(
     createElement(PlanSheet, { payload, codes, issued, keyIdHex: toKeyIdHex(issued.keyId) }),
@@ -74,6 +86,12 @@ describe('the printable sample sheet', () => {
     expect(written).toContain('110mm');
     expect(written.match(/<svg/g) ?? []).toHaveLength(2);
     expect(codes.readable).toBe(true);
+  });
+
+  it('is byte-stable across runs, so npm test never dirties the committed file', async () => {
+    const first = (await renderSample()).html;
+    const second = (await renderSample()).html;
+    expect(second).toBe(first);
   });
 
   it('carries no admin-only styling, only the sheet and print rules', async () => {

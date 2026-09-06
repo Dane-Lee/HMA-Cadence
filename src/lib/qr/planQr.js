@@ -99,13 +99,18 @@ export function normalizeBaseUrl(raw) {
  * payload -> { pairUrl, planUrl, … }
  *
  * `iv` is injectable for reproducible tests only; production callers must let it
- * default, exactly as in `encodePlanEnvelope`.
+ * default, exactly as in `encodePlanEnvelope`. `rawKey` is the same kind of
+ * injection, added 2026-09-06 for one caller: the test that renders the
+ * committed sample sheet. Without it every `npm test` minted a new key, the
+ * sample's two QR codes changed bytes, and the committed file went dirty on
+ * every machine that ran the suite -- including the STATUS.md regeneration.
+ * A fixed key for a sample that opens nothing anywhere is not a secret.
  *
  * The key is returned raw so the caller can render it. That is unavoidable — the
  * pairing QR *is* the key — and it is why this must run on the admin's own
  * machine and never on a server.
  */
-export async function buildPlanQr(payload, { baseUrl, iv } = {}) {
+export async function buildPlanQr(payload, { baseUrl, iv, rawKey: injectedKey } = {}) {
   const base = normalizeBaseUrl(baseUrl);
 
   const errors = validatePlanPayload(payload);
@@ -113,7 +118,7 @@ export async function buildPlanQr(payload, { baseUrl, iv } = {}) {
     throw new PlanQrError('invalid_payload', 'Cadence would reject this plan.', errors);
   }
 
-  const rawKey = generatePlanKey();
+  const rawKey = injectedKey ?? generatePlanKey();
   const keyId = await keyIdFor(rawKey);
   const key = await importPlanKey(rawKey, { extractable: true });
   const envelope = await encodePlanEnvelope(payload, { key, keyId, iv });
