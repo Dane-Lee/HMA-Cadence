@@ -69,7 +69,26 @@ export default function ScanCode() {
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
+          video: {
+            facingMode: { ideal: 'environment' },
+            // Measured on the owner's iPhone, off the printed sheet, 2026-09-08.
+            // Asking for no resolution gets iOS's default 640x480, and a plan
+            // code -- ~165 modules across with the quiet zone, so roughly 3px a
+            // module, right at jsQR's floor -- decoded in about 10% of frames.
+            // At 10% the scanner reads as broken. Requesting 1080p took it to
+            // ~50% and a lock-on inside a few hundred milliseconds. The jsQR
+            // call itself was identical in both arms; this constraint was the
+            // only variable, and it is worth 5x.
+            //
+            // `ideal`, not `exact`: a device that cannot manage this has to
+            // still open a camera rather than fail closed.
+            //
+            // iOS returned the stream PORTRAIT (1080 wide x 1920 high), so the
+            // short side is what binds. `{ ideal: 2560 }` may buy more and is
+            // untested -- do not raise it without measuring the same way.
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
           audio: false,
         });
       } catch (err) {

@@ -135,12 +135,23 @@ export function sheetExercises(payload) {
  * measured decision, not a hedge.** First print test, 2026-09-06, the owner's
  * iPhone: the 55mm pairing code decoded in the Camera app; the 110mm plan code
  * (version 30, 0.76mm modules -- well above the 0.5mm floor) did not register
- * as a QR at all. Module size was not the limit; density was -- iOS Camera is
- * unreliable on codes this dense, and real plans run to version 40. The in-app
- * scanner (/scan, jsQR at full video resolution) was device-tested on the same
- * phone on 2026-08-31 and decoded both codes. So the sheet sends the employee
- * to the thing that works, in the order that gets them there: code 1 opens the
- * page, and the page has the scanner.
+ * as a QR at all.
+ *
+ * **Two corrections to what used to be written here, both from 2026-09-08.**
+ * This said density was the limit. It is not: the owner then read a version 35
+ * code -- 0.667mm modules, denser than the one that failed -- with the same
+ * Camera app off paper. So the 09-06 failure has some other cause and is still
+ * unexplained, and `MIN_MODULE_MM` predicts nothing useful about it.
+ *
+ * And this said the scanner runs "jsQR at full video resolution", which was true
+ * of the canvas and false of the stream feeding it: `/scan` asked for no
+ * resolution at all and got iOS's 640x480, decoding ~10% of frames. That wording
+ * is a good part of why nobody looked there for a week. Fixed in ScanCode.jsx,
+ * measured at ~50% with 1080p requested.
+ *
+ * The scanner was device-tested on the same phone on 2026-08-31 and decoded both
+ * codes. So the sheet sends the employee to the thing that works, in the order
+ * that gets them there: code 1 opens the page, and the page has the scanner.
  *
  * **But the wrong order is not a failure**, and the sheet must not say it is.
  * `applyPlanEnvelope` saves an unopenable plan as a pending envelope and
