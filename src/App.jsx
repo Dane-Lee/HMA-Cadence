@@ -5,17 +5,25 @@ import SetPin from './pages/SetPin.jsx';
 import EmployeeShell from './pages/EmployeeShell.jsx';
 import EmployeeToday from './pages/EmployeeToday.jsx';
 import EmployeeSettings from './pages/EmployeeSettings.jsx';
-import AdminShell from './pages/AdminShell.jsx';
-import AdminEmployees from './pages/AdminEmployees.jsx';
-import AdminEmployeeDetail from './pages/AdminEmployeeDetail.jsx';
-import AdminPainQueue from './pages/AdminPainQueue.jsx';
-import AdminImportPlan from './pages/AdminImportPlan.jsx';
-import AdminIssuePlan from './pages/AdminIssuePlan.jsx';
-import AdminReturns from './pages/AdminReturns.jsx';
 import PairDevice from './pages/PairDevice.jsx';
 import ScanPlan from './pages/ScanPlan.jsx';
 import ScanCode from './pages/ScanCode.jsx';
+// Resolved by vite.config.js: the real admin router in the admin build, an empty
+// array in the client build. Admin pages must not be imported anywhere else in
+// this file -- a direct import would put them back in the employee's bundle and
+// defeat the split. `test/clientBuild.test.js` asserts that.
+import adminRoutes from '#admin-routes';
 import './styles/app.css';
+
+/** Where a signed-in employee belongs when they land somewhere they should not.
+ *
+ * In the admin build an admin goes to `/admin`. In the client build that route
+ * does not exist, so everyone goes to `/today` -- redirecting to a route the
+ * bundle has never heard of would bounce off the catch-all and back again. */
+function homeFor(employee) {
+  if (__ADMIN_BUILD__ && employee?.role === 'admin') return '/admin';
+  return '/today';
+}
 
 function RequireAuth({ children, role }) {
   const { employee, mustChangePin } = useAuth();
@@ -23,7 +31,7 @@ function RequireAuth({ children, role }) {
   // A temp PIN must be replaced before anything else is reachable.
   if (mustChangePin) return <Navigate to="/set-pin" replace />;
   if (role && employee.role !== role) {
-    return <Navigate to={employee.role === 'admin' ? '/admin' : '/'} replace />;
+    return <Navigate to={homeFor(employee)} replace />;
   }
   return children;
 }
@@ -33,7 +41,7 @@ function RequirePinChange({ children }) {
   if (!employee) return <Navigate to="/login" replace />;
   // Already set a real PIN — no reason to be here.
   if (!mustChangePin) {
-    return <Navigate to={employee.role === 'admin' ? '/admin' : '/today'} replace />;
+    return <Navigate to={homeFor(employee)} replace />;
   }
   return children;
 }
@@ -42,7 +50,7 @@ function RootRedirect() {
   const { employee, mustChangePin } = useAuth();
   if (!employee) return <Navigate to="/login" replace />;
   if (mustChangePin) return <Navigate to="/set-pin" replace />;
-  return <Navigate to={employee.role === 'admin' ? '/admin' : '/today'} replace />;
+  return <Navigate to={homeFor(employee)} replace />;
 }
 
 export default function App() {
@@ -89,66 +97,7 @@ export default function App() {
         }
       />
 
-      <Route
-        path="/admin"
-        element={
-          <RequireAuth role="admin">
-            <AdminShell>
-              <AdminEmployees />
-            </AdminShell>
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/admin/employee/:id"
-        element={
-          <RequireAuth role="admin">
-            <AdminShell>
-              <AdminEmployeeDetail />
-            </AdminShell>
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/admin/pain"
-        element={
-          <RequireAuth role="admin">
-            <AdminShell>
-              <AdminPainQueue />
-            </AdminShell>
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/admin/import"
-        element={
-          <RequireAuth role="admin">
-            <AdminShell>
-              <AdminImportPlan />
-            </AdminShell>
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/admin/issue"
-        element={
-          <RequireAuth role="admin">
-            <AdminShell>
-              <AdminIssuePlan />
-            </AdminShell>
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/admin/returns"
-        element={
-          <RequireAuth role="admin">
-            <AdminShell>
-              <AdminReturns />
-            </AdminShell>
-          </RequireAuth>
-        }
-      />
+      {adminRoutes}
 
       <Route path="*" element={<RootRedirect />} />
     </Routes>

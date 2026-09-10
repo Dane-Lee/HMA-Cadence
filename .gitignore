@@ -1,6 +1,11 @@
 node_modules
 dist
 dist-ssr
+# Build variants (PIPELINE Phase 5): dist-client is what Vercel serves,
+# dist-admin never leaves the practitioner machine and must never be
+# committed -- it contains the admin pages that mint plan keys.
+dist-client
+dist-admin
 .env
 .env.local
 .env.*.local
