@@ -870,8 +870,13 @@
   border: 1px solid var(--border, #d5d5d5);
   border-radius: 8px;
   font: inherit;
-  background: var(--surface, #fff);
-  color: inherit;
+  /* --bg-input/--text, not --surface: the latter is defined nowhere, so this
+     field rendered white-on-white in dark theme. The payload textarea beneath
+     it (.import-editor) always used these two, which is why only this one was
+     unreadable. Design step 5 introduces a real --surface token; revisit then
+     rather than assuming this is already it. */
+  background: var(--bg-input);
+  color: var(--text);
 }
 .import-input:focus { outline: none; border-color: var(--accent); }
 .field-label { display: block; margin: 16px 0 6px; font-weight: 600; font-size: 14px; }
@@ -884,7 +889,9 @@
   margin-bottom: 10px;
   border-radius: 8px;
   border-left: 3px solid var(--border, #d5d5d5);
-  background: var(--surface-muted, rgba(0, 0, 0, .03));
+  /* Was --surface-muted, also defined nowhere: the fallback is a black tint,
+     which on a dark ground erased the row separation instead of providing it. */
+  background: var(--bg-section);
 }
 .returns-item--opened { border-left-color: var(--accent, #2f7d5d); }
 /* Everything that is not "opened" needs the admin to do something, so they all
