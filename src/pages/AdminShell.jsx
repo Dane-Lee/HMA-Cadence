@@ -8,6 +8,8 @@ export default function AdminShell({ children }) {
       <header className="app-header">
         <div className="app-header__brand">
           <div className="app-header__brand-mark">
+            <img src="/hendrickson-logo.jpg" alt="Hendrickson" />
+            <span className="app-header__brand-divider" aria-hidden="true" />
             <img src="/ati-logo.png" alt="ATI Worksite Solutions" />
           </div>
           <div>HMA <span style={{ opacity: .55, fontWeight: 500 }}>Admin</span></div>

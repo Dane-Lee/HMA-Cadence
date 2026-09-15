@@ -22,6 +22,14 @@
   letter-spacing: .02em;
 }
 
+/* CO-BRANDED. Cadence is the one app in the estate with two owners on screen:
+   ATI builds it, Hendrickson employees are the people holding the phone. The
+   employee's own company reads first, because in their hands this is a
+   Hendrickson thing that ATI provides -- not the other way round.
+
+   Both marks are black line art on white with no alpha, so they share one white
+   plate rather than each carrying its own. A thin divider keeps them from
+   reading as a single mark. */
 .app-header__brand-mark {
   /* The real ATI logo, not a letter in a coloured square. Served from
      /ati-logo.png, which is a byte-identical copy of design/ati-logo.css's
@@ -32,20 +40,28 @@
      dark theme it would otherwise be black on near-black. The image itself is
      untouched -- only what sits behind it is ours. */
   border-radius: 8px;
-  padding: 5px 8px;
+  padding: 5px 9px;
   background: #fff;
   display: inline-flex;
   align-items: center;
+  gap: 9px;
 }
 
 .app-header__brand-mark img {
   /* Explicit pixel height, not 100%. A percentage height needs a definite
-     containing block to resolve against; inside a centred grid item it has
-     none, and the image rendered at its natural 361x135 and overflowed the
-     plate. Width follows the aspect ratio. */
+     containing block to resolve against; inside a centred item it has none, and
+     the image renders at natural size and overflows the plate. Width follows
+     the aspect ratio. */
   height: 24px;
   width: auto;
   display: block;
+}
+
+.app-header__brand-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 0;
+  background: rgba(0, 0, 0, .18);
 }
 
 .app-header__nav {

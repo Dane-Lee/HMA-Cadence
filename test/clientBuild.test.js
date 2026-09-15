@@ -193,3 +193,29 @@ describe('the deploy points at the client build', () => {
     expect(catchAll, 'vercel.json needs a catch-all rewrite to /index.html').toBe(true);
   });
 });
+
+describe('the app says which app it is', () => {
+  it('the browser tab matches the installed app name', () => {
+    // It said "HMA Tracker" for months -- a leftover from Cadence being cloned
+    // from the Tracker. The owner found it on the deployed site and went
+    // looking in Vercel for it, which is exactly the wrong place: it is in this
+    // repo's index.html and nothing about hosting can change it.
+    //
+    // It matters more here than in most apps. Cadence is the one thing an
+    // EMPLOYEE opens, on their own phone, and the tab and the home-screen icon
+    // are most of what tells them what they installed.
+    const html = readFileSync(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8');
+    const viteConfig = readFileSync(
+      fileURLToPath(new URL('../vite.config.js', import.meta.url)),
+      'utf8',
+    );
+
+    const title = html.match(/<title>([^<]+)<\/title>/)?.[1];
+    const manifestName = viteConfig.match(/name: '([^']+)'/)?.[1];
+
+    expect(title, 'index.html has no <title>').toBeTruthy();
+    expect(manifestName, 'vite.config.js has no PWA manifest name').toBeTruthy();
+    expect(title).toBe(manifestName);
+    expect(title).not.toMatch(/tracker/i);
+  });
+});
