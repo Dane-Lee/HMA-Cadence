@@ -152,3 +152,44 @@ describe('the client build excludes the admin app', () => {
     ).toEqual([]);
   });
 });
+
+describe('the deploy points at the client build', () => {
+  // Vercel's first attempt at this failed with "No Output Directory named
+  // 'dist' found" -- which is the split working: the build makes dist-client
+  // and dist-admin, and nothing is at the default path. Fixing that in the
+  // dashboard would have left the decision in a web UI where neither session
+  // can see it and a project recreated later would quietly lose it.
+  const config = JSON.parse(
+    readFileSync(fileURLToPath(new URL('../vercel.json', import.meta.url)), 'utf8'),
+  );
+  const viteConfig = readFileSync(
+    fileURLToPath(new URL('../vite.config.js', import.meta.url)),
+    'utf8',
+  );
+
+  it('serves the directory the client build actually writes', () => {
+    const match = viteConfig.match(/outDir: IS_ADMIN \? '([^']+)' : '([^']+)'/);
+    expect(match, 'vite.config.js no longer declares the two outDirs').toBeTruthy();
+    const [, adminDir, clientDir] = match;
+
+    expect(config.outputDirectory).toBe(clientDir);
+    expect(config.outputDirectory).not.toBe(adminDir);
+  });
+
+  it('never serves the admin build', () => {
+    // The one that must never be deployed: it mints plan keys, and planQr.js
+    // says in its own comment that key minting runs on the admin's machine and
+    // never on a server. A deploy pointed here would publish that to everyone.
+    expect(config.outputDirectory).not.toMatch(/admin/);
+  });
+
+  it('rewrites unknown paths to the app, so /scan survives a direct open', () => {
+    // Cadence is a single-page app. Without this, opening /scan directly -- or
+    // reloading on it, which is what a phone does constantly -- is a 404 from
+    // the static host rather than the scanner.
+    const catchAll = (config.rewrites ?? []).some(
+      (rule) => rule.source === '/(.*)' && rule.destination === '/index.html',
+    );
+    expect(catchAll, 'vercel.json needs a catch-all rewrite to /index.html').toBe(true);
+  });
+});
