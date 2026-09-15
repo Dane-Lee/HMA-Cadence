@@ -6,20 +6,8 @@ import { toKeyIdHex } from '../lib/qr/envelope.js';
 import { recordIssuedPlanKey } from '../lib/queries.js';
 import { renderSheetCodes } from '../lib/sheet/planSheet.js';
 import PlanSheet from '../components/PlanSheet.jsx';
+import { defaultBaseUrl } from '../lib/clientBaseUrl.js';
 
-/* Where the employee's phone lands when it scans the plan code.
- *
- * Defaults to this origin because today one build serves both admin and client;
- * the client/admin split is still ahead of us. It is editable because the base
- * URL is part of what the QR encodes, so a long host eats capacity that the plan
- * needs -- which is exactly the sort of thing that only shows up on the printed
- * sheet, at the printer, with an employee waiting. */
-function defaultBaseUrl() {
-  const configured = import.meta.env?.VITE_CLIENT_BASE_URL;
-  if (configured) return String(configured).trim();
-  if (typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
-  return '';
-}
 
 /* The payload carries either a single `name` or first/last, depending on which
  * side of the pipeline built it. Stored only so the admin can recognise a row
