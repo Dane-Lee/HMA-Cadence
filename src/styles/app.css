@@ -23,14 +23,26 @@
 }
 
 .app-header__brand-mark {
-  width: 32px;
+  /* The real ATI logo, not a letter in a coloured square. Served from
+     /ati-logo.png, which is a byte-identical copy of design/ati-logo.css's
+     neighbour in the suite repo -- Cadence deploys independently so it cannot
+     reach into that tree, and `tools/embed-logo.py` keeps the copy in step.
+
+     White plate on purpose: the artwork is black type on transparency, so in
+     dark theme it would otherwise be black on near-black. The image itself is
+     untouched -- only what sits behind it is ours. */
   height: 32px;
   border-radius: 8px;
-  background: var(--accent);
+  padding: 3px 7px;
+  background: #fff;
   display: grid;
   place-items: center;
-  color: #fff;
-  font-weight: 800;
+}
+
+.app-header__brand-mark img {
+  height: 100%;
+  width: auto;
+  display: block;
 }
 
 .app-header__nav {
