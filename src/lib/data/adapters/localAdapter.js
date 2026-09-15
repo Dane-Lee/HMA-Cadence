@@ -13,6 +13,7 @@
  */
 import bcrypt from 'bcryptjs';
 import { buildSeedDb } from '../localSeed.js';
+import { EXERCISE_BY_ID } from '../exerciseLibrary.js';
 import { assertValidPin, PIN_COST } from '../pin.js';
 import {
   validatePlanPayload,
@@ -449,17 +450,43 @@ export async function ingestPlan(payload) {
   }
 
   // 2. Upsert exercises into the library, keyed by the Tracker's source id.
+  //
+  // CONTENT COMES FROM THE BUNDLED LIBRARY WHEN THE PLAN DOES NOT CARRY IT.
+  // Decision E12 was reversed on 2026-09-15: the QR used to hold every
+  // exercise's full instructions, which capped a plan at 11-14 exercises
+  // before `/admin/issue` refused it outright. It now carries identity and
+  // dosage, and `exerciseLibrary.js` supplies the words and the picture.
+  //
+  // THE PAYLOAD STILL WINS WHERE IT SPEAKS. A plan issued before this change
+  // carries its own text, and that text is what the employee was actually
+  // given -- so it is used as-is and an old QR keeps working unchanged. This
+  // is why the reversal needed no contract version bump in either direction.
+  const unresolved = [];
   for (const ex of exercises) {
+    const known = EXERCISE_BY_ID.get(ex.source_exercise_id) ?? null;
+    const description = ex.instructions ?? known?.instructions ?? null;
+    const imageRef = ex.image_ref ?? known?.image_ref ?? null;
+
+    // An exercise with neither. It is NOT a reason to refuse the whole plan --
+    // one unrecognised id would cost an employee their other seven exercises,
+    // and the remaining seven are still correct. It is reported instead, so the
+    // admin who issued it can see that Cadence's library is behind the Tracker
+    // rather than finding out from someone holding a phone.
+    if (!description) unresolved.push(ex.source_exercise_id);
+
     const fields = {
       source_exercise_id: ex.source_exercise_id,
-      name: ex.name,
-      description: ex.instructions ?? null,
-      default_prescription: ex.default_prescription ?? null,
-      default_duration_sec: ex.duration_sec ?? null,
-      movement_category: ex.movement_category,
-      exercise_type: ex.exercise_type,
-      image_filename: ex.image_ref ?? null,
+      name: ex.name ?? known?.name ?? ex.source_exercise_id,
+      description,
+      default_prescription: ex.default_prescription ?? known?.default_prescription ?? null,
+      default_duration_sec: ex.duration_sec ?? known?.duration_sec ?? null,
+      movement_category: ex.movement_category ?? known?.movement_category ?? null,
+      exercise_type: ex.exercise_type ?? known?.exercise_type ?? null,
+      image_filename: imageRef,
       image_url: null,
+      // Which of the three answers this row got. Recorded because the three
+      // look identical afterwards and only one of them is a problem.
+      content_source: ex.instructions ? 'payload' : known ? 'library' : 'missing',
       active: true,
     };
     const lib = store.exercise_library.find((l) => l.source_exercise_id === ex.source_exercise_id);
@@ -511,6 +538,10 @@ export async function ingestPlan(payload) {
 
   persist();
   return {
+    // Ids the plan named that neither it nor the bundled library could describe.
+    // Empty on every ordinary plan; non-empty means Cadence is behind the
+    // Tracker and someone needs to regenerate the library.
+    unresolved_exercises: unresolved,
     status: 'applied',
     plan_id,
     employee_id: account.id,

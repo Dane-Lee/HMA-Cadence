@@ -1,125 +1,77 @@
 /**
  * How many exercises fit in a plan QR, measured against the Tracker's real library.
  *
- * Decision E12 ("do not slim the payload") rests on the sentence *"Capacity is
- * fine (911 chars for 12 exercises)"*. That figure does not reproduce, and the
- * reason is recorded in WORKLOG 1e: the earlier measurement reused **identical**
- * instruction text across exercises, which DEFLATE collapses to almost nothing.
- * Real plans carry 44 different instructions, and they do not compress that way.
+ * MEASURES THE CONTRACT AS IT IS TODAY. Since the owner reversed decision E12 on
+ * 2026-09-15 the payload carries identity and dosage only -- no `instructions`,
+ * no `image_ref` -- and Cadence resolves the words and the picture from its own
+ * bundled library. That is the shape measured by default here.
  *
- * So this exists to stop the number being re-derived from a fixture again. It
- * reads the Tracker's actual `EXERCISES` object out of its `index.html` and runs
- * the actual `buildPlanQr()`, which is the same function `/admin/issue` calls.
- * Nothing here is a model of the encoder; it *is* the encoder.
+ * WHY THIS TOOL EXISTS AT ALL is the other half of the story, and it is the
+ * reason the default matters. E12 was decided on the sentence *"Capacity is fine
+ * (911 chars for 12 exercises)"*, and that figure did not reproduce: the earlier
+ * measurement reused IDENTICAL instruction text across exercises, which DEFLATE
+ * collapses to almost nothing. Real plans carry 44 different instructions and do
+ * not compress that way. The true figure was 2,148 bytes at 92% full, with a
+ * hard ceiling of 11-14 exercises.
  *
- *   node tools/measure-plan-capacity.mjs [--base https://host] [--max 20]
+ * So a stale number in this tool is exactly the failure it was built to prevent.
+ * It reads the Tracker's actual `EXERCISES` out of its `index.html` and runs the
+ * actual `buildPlanQr()` -- the same function `/admin/issue` calls. Nothing here
+ * models the encoder; it *is* the encoder.
+ *
+ *   node tools/measure-plan-capacity.mjs [--base https://host] [--max 50] [--fat]
  *
  *   --base  Origin the QR points at. It is inside the QR, so it counts against
- *           capacity -- measure with the host you will really deploy on. The
- *           default is a realistic length rather than a flatteringly short one.
- *   --max   Highest exercise count to try (default 20).
- *
- * The ceiling this prints is a real operational limit: past it, `/admin/issue`
- * refuses and the admin cannot issue that plan at all.
+ *           capacity. Measured: its length barely matters, which is recorded
+ *           below as a negative result so it is not re-investigated.
+ *   --max   Highest exercise count to try (default: the whole library).
+ *   --fat   Measure the OLD pre-E12-reversal shape, with full instructions
+ *           inlined. Kept so the reversal's benefit stays reproducible rather
+ *           than remembered.
  */
 
-import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import QRCode from 'qrcode';
 import { buildPlanQr, MAX_QR_BYTES, PLAN_ECC_LEVEL, PlanQrError } from '../src/lib/qr/planQr.js';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const CADENCE = join(HERE, '..');
-
-/** The Tracker's `index.html`, under either folder name at either depth.
- *  It is `HMA-Tracker-app` on one machine and `HMA-Correct-Exercise-Tracker` on
- *  the other, inside the suite repo on one and alongside it on the other. Same
- *  resolution order as `estate-status.mjs`; do not hardcode one. */
-function trackerIndex() {
-  const roots = [join(CADENCE, '..'), join(CADENCE, '..', '..')];
-  for (const root of roots) {
-    for (const name of ['HMA-Tracker-app', 'HMA-Correct-Exercise-Tracker']) {
-      const candidate = join(root, name, 'index.html');
-      if (existsSync(candidate)) return candidate;
-    }
-  }
-  return null;
-}
-
-/** The Tracker's picker keys are not the contract's movement keys.
- *  Mirrors its own `CADENCE_MOVEMENT`. */
-const CATEGORY = {
-  lunge: 'lunge',
-  sld: 'single_leg_dip',
-  shoulder: 'shoulder_reach',
-  trunk: 'trunk_rotation',
-  cervical: 'cervical_rotation',
-};
-
-/** Lift one `const NAME={...}` object literal out of the page by brace-matching.
- *
- *  Evaluating the literal is deliberate. A regex over the entries would quietly
- *  drop any exercise whose text did not match its assumptions, and a capacity
- *  measurement that silently used 40 of 44 exercises is worse than none. */
-function readObject(html, name) {
-  const start = html.indexOf(`const ${name}={`);
-  if (start === -1) throw new Error(`no ${name} object in the Tracker's index.html`);
-  const open = html.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < html.length; i += 1) {
-    if (html[i] === '{') depth += 1;
-    else if (html[i] === '}') {
-      depth -= 1;
-      // eslint-disable-next-line no-new-func
-      if (depth === 0) return new Function(`return ${html.slice(open, i + 1)}`)();
-    }
-  }
-  throw new Error(`${name} is not brace-balanced`);
-}
+import { readCatalogue, trackerIndex } from './tracker-library.mjs';
 
 /** Every exercise, shaped exactly as the Tracker's `buildPlanPayload()` emits it.
  *
- *  The per-exercise fields have to come from the Tracker's real tables, not from
- *  plausible constants. `exercise_type`, `duration_sec` and `image_ref` all vary
- *  per exercise in a real plan, and a constant repeated 15 times is close to free
- *  under DEFLATE. Filling them in with one value each is the same mistake that
- *  produced E12's "911 chars" -- it measures the compressor, not the payload. */
+ *  The catalogue fields come from the shared reader; the three PLAN fields are
+ *  added here because they describe one person's programme rather than the
+ *  exercise. They have to vary: `days` and `sort_order` differ per exercise in a
+ *  real plan, and a constant repeated 15 times is close to free under DEFLATE.
+ *  Filling them in with one value each is the same mistake that produced E12's
+ *  "911 chars" -- it measures the compressor, not the payload. */
 function readLibrary(indexPath) {
-  const html = readFileSync(indexPath, 'utf8');
-  const exercises = readObject(html, 'EXERCISES');
-  const types = readObject(html, 'EX_TYPE');
-  const durations = readObject(html, 'EX_DURATION');
-  const images = readObject(html, 'DEFAULT_IMAGES');
+  // Key order is reconstructed deliberately, matching what `buildPlanPayload()`
+  // emits. It is not cosmetic here: JSON.stringify preserves insertion order, so
+  // moving a field changes how the payload DEFLATEs while leaving its length
+  // identical -- spreading the catalogue and appending the plan fields shifted
+  // every QR measurement by a few bytes with no change to the JSON size at all.
+  // A tool whose whole job is to count bytes must not quietly re-order them.
+  return readCatalogue(indexPath).map((entry, i) => ({
+    source_exercise_id: entry.source_exercise_id,
+    name: entry.name,
+    instructions: entry.instructions,
+    movement_category: entry.movement_category,
+    exercise_type: entry.exercise_type,
+    default_prescription: entry.default_prescription,
+    prescription_override: null,
+    duration_sec: entry.duration_sec,
+    days: [[1, 3, 5], [2, 4], [1, 2, 3, 4, 5], [1, 4]][i % 4],
+    sort_order: i,
+    image_ref: entry.image_ref,
+  }));
+}
 
-  const flat = [];
-  for (const [picker, group] of Object.entries(exercises)) {
-    const category = CATEGORY[picker];
-    if (!category) throw new Error(`unmapped Tracker picker key "${picker}"`);
-    for (const ex of group.exercises ?? []) {
-      const image = images[ex.id];
-      flat.push({
-        source_exercise_id: ex.id,
-        name: ex.name,
-        instructions: ex.inst,
-        movement_category: category,
-        // `.replace(/\s+/g,'_')` mirrors buildPlanPayload; "static stabilization"
-        // is stored with a space and the contract wants the key form.
-        exercise_type: (types[ex.id] || '').replace(/\s+/g, '_'),
-        default_prescription: ex.sets,
-        prescription_override: null,
-        duration_sec: durations[ex.id] || 0,
-        // A real program assigns days per exercise. Kept varied for the same
-        // reason as the fields above.
-        days: [[1, 3, 5], [2, 4], [1, 2, 3, 4, 5], [1, 4]][flat.length % 4],
-        sort_order: flat.length,
-        image_ref: image && !image.startsWith('data:')
-          ? decodeURIComponent(image.split('/').pop())
-          : null,
-      });
-    }
-  }
-  return flat;
+/** The payload as the Tracker emits it today: identity and dosage, no text.
+ *
+ *  `name` stays -- the contract requires it, and it is what an employee sees if
+ *  their phone's library has not caught up with a newly added exercise. */
+function slim(ex) {
+  const { instructions, image_ref: imageRef, ...rest } = ex;
+  return rest;
 }
 
 function planWith(exercises) {
@@ -147,7 +99,7 @@ const argOf = (flag, fallback) => {
   return i === -1 ? fallback : args[i + 1];
 };
 const base = argOf('--base', 'https://hma-cadence.vercel.app');
-const max = Number(argOf('--max', '20'));
+const fat = args.includes('--fat');
 
 const indexPath = trackerIndex();
 if (!indexPath) {
@@ -156,12 +108,19 @@ if (!indexPath) {
   process.exit(2);
 }
 
-const library = readLibrary(indexPath);
-const lengths = library.map((ex) => ex.instructions.length).sort((a, b) => a - b);
+const full = readLibrary(indexPath);
+const max = Number(argOf('--max', String(full.length)));
+const lengths = full.map((ex) => ex.instructions.length).sort((a, b) => a - b);
 const median = lengths[Math.floor(lengths.length / 2)];
 
-console.log(`Library:  ${library.length} exercises from ${indexPath}`);
-console.log(`          instruction text median ${median} chars`);
+// The shape actually measured in the table below.
+const library = fat ? full : full.map(slim);
+
+console.log(`Library:  ${full.length} exercises from ${indexPath}`);
+console.log(`Contract: ${fat
+  ? 'FAT -- full instructions inlined (the pre-2026-09-15 shape, for comparison)'
+  : 'CURRENT -- identity and dosage only; Cadence resolves text from its library'}`);
+console.log(`          instruction text median ${median} chars${fat ? '' : ' (not sent)'}`);
 console.log(`Base URL: ${base} (${base.length} chars, counts against capacity)`);
 console.log(`Limit:    ${MAX_QR_BYTES} bytes at ECC ${PLAN_ECC_LEVEL}\n`);
 console.log('  exercises | exercise JSON | QR bytes | version | headroom');
@@ -194,10 +153,18 @@ for (let n = 1; n <= Math.min(max, library.length); n += 1) {
 }
 
 if (ceiling === null) {
-  console.log(`\nNo ceiling at or below ${Math.min(max, library.length)} exercises with this base URL.`);
+  console.log(`\nNO CEILING at or below ${Math.min(max, library.length)} exercises with this base URL.`);
+  if (!fat) {
+    console.log('The whole library fits in one plan. That is what reversing E12 bought:');
+    console.log('under the old shape this refused partway through -- run --fat to see it.');
+  }
 } else {
   console.log(`\nCEILING: ${ceiling} exercises. A ${ceiling + 1}-exercise plan cannot be issued at all.`);
   console.log('This is an operational limit, not a warning -- /admin/issue refuses it.');
+  if (!fat) {
+    console.log('NOTE: this is the CURRENT slim contract hitting a limit, which was not');
+    console.log('expected. Check whether the payload has grown.');
+  }
 }
 
 /** Highest exercise count that still issues, for a given ordering of the library. */
@@ -219,10 +186,10 @@ async function ceilingFor(ordered, baseUrl) {
 // The ceiling above is one number for one ordering, and the headroom at the top
 // is tens of bytes -- so the obvious question is what moves it. Two candidates,
 // both measured rather than reasoned about, because the guess was wrong once.
-const byLongest = [...library].sort((a, b) => b.instructions.length - a.instructions.length);
-const byShortest = [...library].sort((a, b) => a.instructions.length - b.instructions.length);
+const byLongest = [...full].sort((a, b) => b.instructions.length - a.instructions.length);
+const byShortest = [...full].sort((a, b) => a.instructions.length - b.instructions.length);
 
-console.log('\nWhat actually moves the ceiling:\n');
+console.log('\nWhat moved the ceiling under the OLD fat contract (kept reproducible):\n');
 console.log('  variable                          | ceiling');
 console.log('  ----------------------------------|--------');
 console.log(`  library order (measured above)     | ${String(ceiling ?? '-').padStart(7)}`);
