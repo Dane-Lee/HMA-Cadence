@@ -78,9 +78,16 @@ describe('the printable sample sheet', () => {
     const { html, codes } = await renderSample();
 
     mkdirSync(fileURLToPath(new URL('../docs/', import.meta.url)), { recursive: true });
-    writeFileSync(OUT, html, 'utf8');
+    // Normalised to LF. The sheet embeds app.css and is built from template
+    // literals in sources git checks out as CRLF on Windows, so the generated
+    // bytes were platform-dependent: every `npm test` on Windows left the
+    // committed file modified, with `git diff` showing nothing and `git status`
+    // showing a change. A permanently dirty tree trains people to stop reading
+    // `git status`, which this estate depends on before staging.
+    writeFileSync(OUT, html.replace(/\r\n/g, '\n'), 'utf8');
 
     const written = readFileSync(OUT, 'utf8');
+    expect(written).not.toContain('\r');
     expect(written).toContain('plan-sheet');
     expect(written).toContain('@page');
     expect(written).toContain('110mm');
@@ -92,6 +99,16 @@ describe('the printable sample sheet', () => {
     const first = (await renderSample()).html;
     const second = (await renderSample()).html;
     expect(second).toBe(first);
+  });
+
+  it('is byte-stable across PLATFORMS too, which is what actually dirtied it', async () => {
+    // Stability within one machine was already asserted above, and was not
+    // enough: run-to-run bytes were identical while the committed file went
+    // modified on every run anyway, because the endings depended on how git
+    // had checked out the sources this is built from. The test above claimed
+    // more in its name than it checked.
+    const { html } = await renderSample();
+    expect(html.replace(/\r\n/g, '\n')).not.toContain('\r');
   });
 
   it('carries no admin-only styling, only the sheet and print rules', async () => {
