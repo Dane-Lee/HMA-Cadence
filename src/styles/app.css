@@ -31,16 +31,19 @@
      White plate on purpose: the artwork is black type on transparency, so in
      dark theme it would otherwise be black on near-black. The image itself is
      untouched -- only what sits behind it is ours. */
-  height: 32px;
   border-radius: 8px;
-  padding: 3px 7px;
+  padding: 5px 8px;
   background: #fff;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
 }
 
 .app-header__brand-mark img {
-  height: 100%;
+  /* Explicit pixel height, not 100%. A percentage height needs a definite
+     containing block to resolve against; inside a centred grid item it has
+     none, and the image rendered at its natural 361x135 and overflowed the
+     plate. Width follows the aspect ratio. */
+  height: 24px;
   width: auto;
   display: block;
 }
