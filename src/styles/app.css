@@ -737,6 +737,25 @@
   color: var(--success);
   margin-bottom: 10px;
 }
+/* Exercises the library could not describe. Warn, not danger: the plan applied
+   and every other exercise is correct -- this is "go regenerate the library",
+   not "something failed". Uses Cadence's own --warn/--warn-bg rather than a new
+   colour; the tablet form learned that lesson the expensive way on 2026-09-15,
+   where a parallel token sat beside the shared palette and the page used it
+   instead. */
+.import-result__warn {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn);
+  color: var(--text);
+  font-size: .88rem;
+  line-height: 1.4;
+}
+.import-result__warn div { margin-top: 6px; color: var(--text-muted); }
+.import-result__warn code { font-size: .85em; word-break: break-all; }
+
 .import-result dl { display: grid; gap: 8px; margin-bottom: 14px; }
 .import-result dl > div { display: grid; grid-template-columns: 90px 1fr; gap: 12px; align-items: baseline; }
 .import-result dt { color: var(--text-muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { EXERCISE_BY_ID, EXERCISE_LIBRARY, EXERCISE_LIBRARY_SIZE } from '../src/lib/data/exerciseLibrary.js';
 import { readCatalogue, trackerIndex } from '../tools/tracker-library.mjs';
+import { buildPlanQr } from '../src/lib/qr/planQr.js';
 
 /**
  * The bundled library must not drift from the Tracker.
@@ -116,5 +117,79 @@ describe('the bundled exercise library', () => {
      * matching. */
     const spaced = EXERCISE_LIBRARY.filter((e) => /\s/.test(e.exercise_type));
     expect(spaced.map((e) => e.source_exercise_id)).toEqual([]);
+  });
+});
+
+describe('the whole library still fits in one plan QR', () => {
+  /* The invariant reversing E12 bought, asserted rather than remembered.
+   *
+   * Before the reversal a plan capped at 11-14 exercises and `/admin/issue`
+   * refused past it. After, the entire library fits -- but only just: around
+   * **110 bytes of headroom at 44 exercises**, which is roughly one more
+   * exercise. Adding two or three to the Tracker would quietly restore a
+   * ceiling, and the symptom would be identical to the original bug: an EIS
+   * discovering at the printer that a plan cannot be issued.
+   *
+   * The exact figure moves by a few bytes with the plan_id and the dates, so
+   * this prints what it measured rather than asserting a number --
+   * `tools/measure-plan-capacity.mjs` is the authority and reported 106 on
+   * 2026-09-15. What is asserted is the thing that matters: headroom > 0.
+   *
+   * A real plan is far smaller -- the 20-minute session budget puts it at 3-8
+   * exercises -- so this is a margin check, not a daily risk. It exists because
+   * the margin is invisible: nothing about adding an exercise to the Tracker
+   * suggests it might make some other plan unissuable.
+   *
+   * It uses the real `buildPlanQr`, the same function `/admin/issue` calls.
+   */
+  it('reports its own headroom, and fails before an admin would', async () => {
+    if (!indexPath) {
+      console.warn('SKIPPED: the Tracker is not cloned beside this repo.');
+      return;
+    }
+
+    const exercises = EXERCISE_LIBRARY.map((entry, i) => ({
+      source_exercise_id: entry.source_exercise_id,
+      name: entry.name,
+      movement_category: entry.movement_category,
+      exercise_type: entry.exercise_type,
+      default_prescription: entry.default_prescription,
+      prescription_override: null,
+      duration_sec: entry.duration_sec,
+      days: [[1, 3, 5], [2, 4], [1, 2, 3, 4, 5], [1, 4]][i % 4],
+      sort_order: i,
+    }));
+
+    const payload = {
+      schema_version: 1,
+      plan_id: 'headroom-probe',
+      generated_at: '2026-09-16T12:00:00.000Z',
+      source: { app: 'hma-tracker', version: 'headroom-probe' },
+      employee: {
+        employee_number: '4412', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera',
+        company: 'Hendrickson', department: 'Weld', shift: '1st', location: 'Somerset, KY',
+      },
+      assessment: {
+        assessment_date: '2026-09-16', assessment_type: 'Initial', total_score: 8,
+        follow_up_date: '2026-10-28', reassessment_date: '2026-10-14', notes: '',
+      },
+      schedule: { work_days: [1, 2, 3, 4, 5], session_budget_sec: 1200 },
+      exercises,
+    };
+
+    let result;
+    try {
+      result = await buildPlanQr(payload, { baseUrl: 'https://hma-cadence.vercel.app' });
+    } catch (error) {
+      throw new Error(
+        `A plan containing the whole ${exercises.length}-exercise library can no longer be `
+        + `issued (${error.code ?? error.message}). The ceiling E12's reversal removed is back. `
+        + 'Run `node tools/measure-plan-capacity.mjs` to see where it now falls.',
+      );
+    }
+
+    // Reported on every run, so the margin shrinking is visible before it bites.
+    console.log(`    whole library: ${exercises.length} exercises, ${result.planBytes} bytes, ${result.headroom} spare`);
+    expect(result.headroom).toBeGreaterThan(0);
   });
 });

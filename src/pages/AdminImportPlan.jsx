@@ -151,6 +151,33 @@ export default function AdminImportPlan() {
               </dd>
             </div>
           </dl>
+
+          {/* Exercises the plan named that neither it nor the bundled library
+              could describe. Empty on every ordinary plan.
+
+              This is the cost of reversing E12 (2026-09-15): the QR carries
+              identity and dosage, and the text comes from
+              `src/lib/data/exerciseLibrary.js`, which is generated from the
+              Tracker. An exercise added there and not regenerated here has no
+              description anywhere. The receiver reports it rather than refusing
+              the plan -- one unrecognised id must not cost an employee their
+              other seven exercises -- so this is the only place it surfaces,
+              and without it the ingest would be reporting into nothing. */}
+          {result.unresolved_exercises?.length > 0 && (
+            <div className="import-result__warn">
+              <strong>
+                {result.unresolved_exercises.length} exercise
+                {result.unresolved_exercises.length === 1 ? '' : 's'} could not be described:
+              </strong>{' '}
+              {result.unresolved_exercises.join(', ')}.
+              <div>
+                The plan applied and every other exercise is fine. These are in the Tracker but
+                not in this app&rsquo;s library yet — regenerate it
+                (<code>node tools/generate-exercise-library.mjs --write</code>) and redeploy.
+              </div>
+            </div>
+          )}
+
           <button className="btn btn-inline" onClick={() => navigate(`/admin/employee/${result.employee_id}`)}>
             View employee →
           </button>

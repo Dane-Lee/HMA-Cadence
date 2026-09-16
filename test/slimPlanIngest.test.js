@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import * as db from '../src/lib/data/adapters/localAdapter.js';
 import { EXERCISE_BY_ID } from '../src/lib/data/exerciseLibrary.js';
@@ -178,5 +180,39 @@ describe('an exercise the library does not know', () => {
     expect(row.name).toBe('Something New');
     expect(row.description).toBeNull();
     expect(row.content_source).toBe('missing');
+  });
+});
+
+describe('the unresolved list has a reader', () => {
+  /* `ingestPlan` reporting `unresolved_exercises` is only worth anything if
+   * something shows it. It did not, for a day: the receiver computed the list
+   * and every screen ignored it, which is the same failure as a log nobody
+   * reads -- the work looks done and the information reaches no one.
+   *
+   * Source-level, and that is a stated limitation rather than a gloss: Cadence's
+   * suite runs in node with no DOM, so there is nothing here that can render a
+   * component. What this catches is the reader being deleted or renamed, which
+   * is the realistic way it would regress.
+   */
+  const root = new URL('..', import.meta.url);
+  const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), 'utf8');
+
+  it('the admin import screen reads the unresolved list', () => {
+    expect(read('src/pages/AdminImportPlan.jsx')).toContain('unresolved_exercises');
+  });
+
+  it('it is shown to the admin, who is the only one who can fix it', () => {
+    /* Not to the employee. The fix is regenerating the library and redeploying,
+     * and an employee holding a phone can do neither -- telling them would be
+     * alarming and useless in equal measure. */
+    const page = read('src/pages/AdminImportPlan.jsx');
+    expect(page).toMatch(/generate-exercise-library/);
+    expect(read('src/pages/ScanPlan.jsx')).not.toContain('unresolved_exercises');
+  });
+
+  it('the class it renders with is actually styled', () => {
+    /* An unstyled warning block is invisible against the success panel it sits
+     * inside, which would be the same bug one layer down. */
+    expect(read('src/styles/app.css')).toContain('.import-result__warn');
   });
 });
