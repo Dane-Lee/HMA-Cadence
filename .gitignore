@@ -16,3 +16,5 @@ dist-admin
 
 # Output of tools/make-plan-qr.mjs — generated, and it embeds a plan key.
 plan-qr.html
+.vercel
+.env*
