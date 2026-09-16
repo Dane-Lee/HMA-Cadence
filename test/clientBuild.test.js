@@ -219,3 +219,98 @@ describe('the app says which app it is', () => {
     expect(title).not.toMatch(/tracker/i);
   });
 });
+
+describe('the client build excludes the demo seed', () => {
+  /* Decision A2: the seed is "stripped from production builds ... the dead
+   * branch is eliminated at compile time so personas are physically absent from
+   * shipped files."
+   *
+   * It was not. On 2026-09-16 the LIVE bundle at hma-cadence.vercel.app still
+   * contained `Maria Santos` and the other four. Cadence is the one
+   * employee-facing app in the estate, so five people's fictional health
+   * records -- programmes, completions, pain reports -- were sitting on the
+   * phone of every real person who installed it, indistinguishable at a glance
+   * from their own data.
+   *
+   * Nothing caught it because nothing looked. `clientBuild.test.js` asked
+   * whether the admin APP had leaked and never whether the demo DATA had, and
+   * the seed is imported by the adapter every build uses, so there was no
+   * variant difference to notice.
+   *
+   * The same string-literal rule as the admin markers applies: `buildSeedDb` is
+   * an identifier and the minifier renames it, so it is absent from both
+   * bundles and would prove nothing. Persona names are string data and survive.
+   */
+  const SEED_MARKERS = [
+    'Maria Santos',
+    'James Kowalski',
+    'Priya Raman',
+    'Tony Reeves',
+    'ADMIN001',
+  ];
+  /* Persona NAMES, checked against both bundles rather than assumed. Two
+   * earlier candidates were rejected by the control below: `must_change_pin:
+   * false` is absent from the admin bundle because the minifier drops the space
+   * and rewrites the boolean, and `must_change_pin` on its own appears in BOTH
+   * because it is a field the adapter reads. Neither discriminates, and a
+   * non-discriminating marker is a test that passes whatever happens. */
+
+  it('the admin bundle still contains the seed, or this test proves nothing', () => {
+    /* The control, and here it is also the intended behaviour rather than only
+     * a discriminator: the seed carries the ONLY admin account, so an admin
+     * build without it locks the practitioner out of their own app. If this
+     * ever fails, check that before assuming the test is wrong. */
+    const admin = bundleText('dist-admin');
+    if (!admin) return; // no admin build on this machine; the client check still runs
+
+    const missing = SEED_MARKERS.filter((marker) => !admin.includes(marker));
+    expect(
+      missing,
+      'these markers no longer discriminate, so the client check below is vacuous',
+    ).toEqual([]);
+  });
+
+  it('the client bundle contains no fictional people', () => {
+    const client = bundleText('dist-client');
+    if (!client) {
+      console.warn('SKIPPED: no dist-client on this machine. Run `npm run build:client`.');
+      return;
+    }
+
+    const found = SEED_MARKERS.filter((marker) => client.includes(marker));
+    expect(
+      found,
+      'the demo seed is in the deployed client bundle — real employees would '
+        + 'have these fictional records on their phones (decision A2)',
+    ).toEqual([]);
+  });
+
+  it('the seed is excluded by the alias, not by a runtime check', () => {
+    /* Same argument as the admin routes. A runtime `if (import.meta.env.PROD)`
+     * leaves the personas in the file for anyone who opens it; the alias means
+     * `localSeed.js` is never in the module graph at all. */
+    const adapter = readFileSync(`${root}src/lib/data/adapters/localAdapter.js`, 'utf8');
+    expect(adapter).toContain("from '#seed'");
+    expect(
+      adapter.includes("from '../localSeed.js'"),
+      'the adapter imports the seed directly, so no build can exclude it',
+    ).toBe(false);
+  });
+
+  it('the empty seed declares every key the real one does', () => {
+    /* The adapter indexes straight into these (`store.employees.find(...)`), so
+     * a key the empty seed forgets is a crash on an employee's phone at the
+     * moment they scan their plan -- the one moment the app has to work. */
+    const real = readFileSync(`${root}src/lib/data/localSeed.js`, 'utf8');
+    const none = readFileSync(`${root}src/lib/data/localSeed.none.js`, 'utf8');
+
+    const keysOf = (text) => {
+      const at = text.indexOf('employees:');
+      const block = text.slice(at, text.indexOf('};', at));
+      return [...block.matchAll(/^\s*([a-z_]+):/gm)].map((m) => m[1]).sort();
+    };
+
+    const missing = keysOf(real).filter((key) => !keysOf(none).includes(key));
+    expect(missing, 'the empty seed is missing store keys the adapter reads').toEqual([]);
+  });
+});

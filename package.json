@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "_imports_note": "Node's package-imports namespace. These are the DEFAULTS used by dev, vitest and the admin build; vite.config.js overrides them with resolve.alias for a production client build. Declared here because a bare `#name` is not resolvable without it -- vitest could not load `#seed` at all, and `#admin-routes` had the same latent hole, hidden only because no test ever imported a module that reaches it.",
+  "imports": {
+    "#seed": "./src/lib/data/localSeed.js",
+    "#admin-routes": "./src/routes/adminRoutes.jsx"
+  },
   "description": "HMA Cadence — corrective exercise compliance PWA for the Hendrickson Navarre facility",
   "scripts": {
     "dev": "node scripts/vite-variant.mjs admin",

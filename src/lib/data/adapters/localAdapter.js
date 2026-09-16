@@ -12,7 +12,10 @@
  * Return shapes are defined by ../contract.js so adapters stay interchangeable.
  */
 import bcrypt from 'bcryptjs';
-import { buildSeedDb } from '../localSeed.js';
+// `#seed` is resolved by vite.config.js: the real demo seed in dev, tests and
+// the admin build; an empty store in the deployed client build, where five
+// fictional people's health records have no business being (decision A2).
+import { buildSeedDb } from '#seed';
 import { EXERCISE_BY_ID } from '../exerciseLibrary.js';
 import { assertValidPin, PIN_COST } from '../pin.js';
 import {
