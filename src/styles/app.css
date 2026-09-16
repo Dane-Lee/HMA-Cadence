@@ -288,6 +288,52 @@
   letter-spacing: .04em;
 }
 
+/* "How?" -- its own control, because tapping the card body already marks the
+   exercise done. An employee wanting to know how to perform it must not have to
+   risk ticking it off to find out.
+
+   A WORD rather than an icon. Everything else on this row is a glyph, and a
+   glyph for "instructions" is exactly the kind of thing that reads as obvious to
+   whoever chose it and as nothing to the person holding the phone at 6am in a
+   plant. The whole point is that it is found without being explained.
+
+   Cadence's own tokens, not new ones -- the same lesson the tablet form paid for
+   on 2026-09-15. */
+.exercise-card__how {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: .8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.exercise-card__how:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.exercise-card__how[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.exercise-card__how-text {
+  margin: 0;
+  font-size: .95rem;
+  line-height: 1.5;
+  color: var(--text);
+  /* Read while standing, often mid-exercise, so it gets the roomiest line
+     height on the screen rather than the tightest. */
+}
+.exercise-card__how-text.is-missing {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .exercise-card__flag {
   flex: 0 0 auto;
   width: 40px; height: 40px;

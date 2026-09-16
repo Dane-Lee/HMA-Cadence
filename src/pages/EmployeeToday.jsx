@@ -27,7 +27,14 @@ export default function EmployeeToday() {
   const [promptSendAfterPain, setPromptSendAfterPain] = useState(false);
 
   // expansion state — which card has the feedback/pain prompt open
-  const [expandedFor, setExpandedFor] = useState(null); // assignmentId | null
+  /* { id, mode } | null -- `mode` is 'how' or 'feedback'.
+   *
+   * Two panels, not one. Putting "how do I do this exercise" in the same drawer
+   * as "report pain" would bury the first behind a flag icon nobody taps to
+   * learn something, and the employee needs the instructions the FIRST time
+   * they open the app, which is exactly when they are least likely to go
+   * hunting. */
+  const [expandedFor, setExpandedFor] = useState(null);
   // optimistic feedback overrides, keyed by assignmentId (falls back to program value)
   const [feedbackOverrides, setFeedbackOverrides] = useState({});
   // brief "thanks for the feedback" acknowledgement, keyed by assignmentId
@@ -261,7 +268,9 @@ export default function EmployeeToday() {
 
           {group.items.map((a) => {
             const isComplete = completedSet.has(a.assignmentId);
-            const isExpanded = expandedFor === a.assignmentId;
+            const openMode = expandedFor?.id === a.assignmentId ? expandedFor.mode : null;
+            const isExpanded = openMode !== null;
+            const showHow = openMode === 'how';
             const fb = feedbackOf(a);
             const fbMeta = FEEDBACK_RATINGS.find((f) => f.key === fb);
 
@@ -289,15 +298,51 @@ export default function EmployeeToday() {
                   </div>
                 </div>
 
+                {/* Its own control rather than a third thing behind the flag.
+                    Tapping the card body marks the exercise done, so that
+                    gesture was already taken; an employee who wants to know how
+                    to do the exercise must not have to risk ticking it off to
+                    find out. */}
+                <button
+                  className="exercise-card__how"
+                  aria-label={`How to do ${a.name}`}
+                  aria-expanded={showHow}
+                  onClick={() =>
+                    setExpandedFor(showHow ? null : { id: a.assignmentId, mode: 'how' })
+                  }
+                >
+                  How?
+                </button>
+
                 <button
                   className="exercise-card__flag"
                   aria-label="Give feedback or report an issue"
-                  onClick={() => setExpandedFor(isExpanded ? null : a.assignmentId)}
+                  onClick={() =>
+                    setExpandedFor(
+                      openMode === 'feedback' ? null : { id: a.assignmentId, mode: 'feedback' },
+                    )
+                  }
                 >
                   ⚑
                 </button>
 
-                {isExpanded && (
+                {showHow && (
+                  <div className="exercise-card__expand">
+                    {a.description ? (
+                      <p className="exercise-card__how-text">{a.description}</p>
+                    ) : (
+                      /* Honest about the gap rather than blank. An exercise with
+                         no description means this app's library is behind the
+                         Tracker; saying "ask Dane" is true and actionable, where
+                         an empty panel reads as a broken app. */
+                      <p className="exercise-card__how-text is-missing">
+                        No instructions for this one yet — ask Dane how to do it.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {openMode === 'feedback' && (
                   <div className="exercise-card__expand">
                     <div className="muted" style={{ marginBottom: 8, fontSize: '.9rem' }}>
                       How&rsquo;s this exercise going?

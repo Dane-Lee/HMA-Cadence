@@ -216,3 +216,57 @@ describe('the unresolved list has a reader', () => {
     expect(read('src/styles/app.css')).toContain('.import-result__warn');
   });
 });
+
+describe('the employee can finally see how to do the exercise', () => {
+  /* Cadence shipped for months without ever showing one.
+   *
+   * Found 2026-09-16: `EmployeeToday` rendered name, type and prescription, and
+   * nothing in `src/` referenced `description` at all. The instructions had
+   * travelled Tracker -> plan QR -> store the whole time and no screen had ever
+   * read them. The owner's answer when asked was unambiguous, so this is the
+   * screen catching up with the data it was already being handed.
+   *
+   * The behavioural half is above: a slim plan resolves real instructions out of
+   * the bundled library into `assignment.description`. What these add is that
+   * something READS it -- which is the half that was missing, and the half a
+   * green test suite happily reported as fine.
+   */
+  const root = new URL('..', import.meta.url);
+  const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), 'utf8');
+
+  it('the field the adapter fills is the field the screen reads', () => {
+    /* The join. `fetchActiveProgram` spreads the library row into each
+     * assignment, so the name has to match exactly -- and a mismatch here is
+     * silent: `a.instructions` would simply be undefined and the panel empty. */
+    const page = read('src/pages/EmployeeToday.jsx');
+    expect(page).toContain('a.description');
+    expect(page).not.toContain('a.instructions');
+  });
+
+  it('has a control that reveals them without ticking the exercise off', () => {
+    /* Tapping the card body marks the exercise complete. If instructions lived
+     * behind that gesture, finding out how to do it would mark it done. */
+    const page = read('src/pages/EmployeeToday.jsx');
+    expect(page).toContain('exercise-card__how');
+    expect(read('src/styles/app.css')).toContain('.exercise-card__how');
+  });
+
+  it('says something honest when an exercise has no instructions', () => {
+    /* Which means this app's library is behind the Tracker. A blank panel reads
+     * as a broken app; "ask Dane" is true and actionable. */
+    expect(read('src/pages/EmployeeToday.jsx')).toMatch(/ask Dane/i);
+  });
+
+  it('a real slim plan produces a card with instructions on it', async () => {
+    /* End to end, through the adapter rather than the DOM: the QR carried no
+     * text, and the assignment the screen renders has the Tracker's words on
+     * it. */
+    const known = EXERCISE_BY_ID.get(REAL_ID);
+    const result = await db.ingestPlan(plan([slimExercise(REAL_ID)]));
+    const program = await db.fetchActiveProgram(result.employee_id);
+    const card = program.assignments[0];
+
+    expect(card.description).toBe(known.instructions);
+    expect(card.description.length).toBeGreaterThan(20);
+  });
+});
