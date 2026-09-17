@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function AdminShell({ children }) {
   const { employee, signOut } = useAuth();
@@ -23,9 +24,12 @@ export default function AdminShell({ children }) {
           <NavLink to="/admin/import">Import</NavLink>
         </nav>
 
-        <button className="app-header__signout" onClick={signOut}>
-          {employee?.name?.split(' ')[0] ?? 'Sign out'} · ⏻
-        </button>
+        <div className="app-header__tools">
+          <ThemeToggle />
+          <button className="app-header__signout" onClick={signOut}>
+            {employee?.name?.split(' ')[0] ?? 'Sign out'} · ⏻
+          </button>
+        </div>
       </header>
       <main className="app-main">{children}</main>
     </>

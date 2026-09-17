@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import { useDailyReminder } from '../lib/reminders.js';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function EmployeeShell({ children }) {
   const { employee, signOut } = useAuth();
@@ -26,6 +27,7 @@ export default function EmployeeShell({ children }) {
         <div className="app-header__nav">
           <NavLink to="/today" end aria-label="Today">Today</NavLink>
           <NavLink to="/settings" aria-label="Reminders">Reminders</NavLink>
+          <ThemeToggle />
           <button className="app-header__signout" onClick={signOut} aria-label="Sign out">
             {employee?.name?.split(' ')[0] ?? 'Sign out'} · ⏻
           </button>

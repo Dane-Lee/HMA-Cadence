@@ -13,6 +13,7 @@ import ScanCode from './pages/ScanCode.jsx';
 // this file -- a direct import would put them back in the employee's bundle and
 // defeat the split. `test/clientBuild.test.js` asserts that.
 import adminRoutes from '#admin-routes';
+import PageTransition from './components/PageTransition.jsx';
 import './styles/app.css';
 
 /** Where a signed-in employee belongs when they land somewhere they should not.
@@ -55,6 +56,7 @@ function RootRedirect() {
 
 export default function App() {
   return (
+    <PageTransition>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<Login />} />
@@ -101,5 +103,6 @@ export default function App() {
 
       <Route path="*" element={<RootRedirect />} />
     </Routes>
+    </PageTransition>
   );
 }
