@@ -1,6 +1,54 @@
+@import './tokens.css';
+
 /* ─────────────────────────────────────────────────────
-   HMA Cadence — Design System
-   Dark mode default, ATI brand, accessibility-first.
+   HMA Cadence — the shared HMA design system, adopted 2026-09-17.
+
+   Step 5 of DESIGN-SYSTEM-PLAN.md. Its brief splits the app in two:
+
+     * the ADMIN side takes the Manual's chrome wholesale;
+     * the CLIENT side takes the face, the Manual's red and greys, and the pill
+       buttons, but KEEPS its 48/56px tap targets and its radius scale — "arm's
+       length in a plant is a different instrument", and where the two conflict
+       the constraint wins.
+
+   Cadence's own vocabulary (--bg, --text, --border, --success…) survives. It is
+   redefined below in terms of the shared tokens rather than replaced, because
+   1,100 lines of app.css speak it and renaming all of that would be a refactor
+   pretending to be a restyle. What changes is where the values come from.
+
+   THE THREE FINDINGS RECORDED AGAINST THIS STEP ON 2026-09-10, AND WHAT EACH
+   TURNED OUT TO BE:
+
+   (a) Cadence cannot @import the shared file. TRUE, and it is a THIRD
+       consumption category — not the React apps' import, not the single-file
+       apps' inline copy, but a separate repo carrying a file. `tokens.css`
+       beside this one is that copy and two tests now compare it.
+
+   (b) The theme polarity is inverted. TRUE of the stylesheet and NOT of the
+       app. `:root` here was the LIGHT theme with dark as an override — but
+       `index.html` has always carried `data-theme="dark"`, so what actually
+       rendered was dark. DESIGN-SYSTEM-PLAN §1 says of Cadence: *"light
+       :root, comment claims 'dark mode default' — it is not"*. That audit read
+       the stylesheet and not the document; the comment was right. The polarity
+       is now the shared file's — `:root` is dark, light is the override — so
+       the stylesheet finally says what the app does.
+
+   (c) --accent and --warn collide, and not harmlessly. TRUE, and the fix is
+       adoption rather than avoidance. The shared values are RGB triplets and
+       Cadence used the same two names as finished colours, so `var(--accent)`
+       would have yielded `200 25 46` where a colour was wanted — an invalid
+       declaration, which is worse than a wrong colour because it silently
+       falls back to whatever was inherited. Cadence's two declarations are
+       deleted and its 24 use sites now read `rgb(var(--accent))`. One name,
+       one meaning, estate-wide.
+
+   ONE MORE, FOUND BUILDING IT: the shared --rim is too faint on a dark ground
+   for this app, as it was for the Overlay (owner, 2026-09-10) and the Tracker.
+   That is now THREE apps lifting the same token locally, which by the rule
+   written into the Tracker's stylesheet makes it a shared-file question rather
+   than a local fix. It is NOT taken here — a shared token change touches four
+   copies and the Manual — and is raised in HANDOFF instead. What is below is
+   Cadence's own border values, chosen for a phone held at arm's length.
    ───────────────────────────────────────────────────── */
 
 *, *::before, *::after {
@@ -11,107 +59,115 @@
 }
 
 :root {
-  /* Light mode (default :root) */
-  --bg: #f2f2f2;
-  --bg-card: #ffffff;
-  --bg-input: #ffffff;
-  --bg-section: #f7f7f8;
-  --bg-hover: #eaeaea;
-  --text: #1a1a1a;
-  --text-secondary: #3a3a3a;
-  --text-muted: #777;
-  --border: #c8c8c8;
-  --border-light: #ddd;
+  /* DARK — the base, matching the shared file's polarity. This is what the app
+     renders: index.html carries data-theme="dark", which matches no override,
+     so these values apply. */
+  --bg: rgb(var(--depth));
+  --bg-card: rgb(var(--surface));
+  --bg-input: rgb(var(--brand));
+  --bg-section: var(--panel);
+  --bg-hover: var(--panel-mid);
 
-  --accent: #cc0000;
-  --accent-hover: #a80000;
-  --accent-bg: #fce8e8;
-  --accent-text: #b30000;
+  --text: rgb(var(--ink));
+  --text-secondary: rgb(var(--ink) / .72);
+  --text-muted: rgb(var(--ink) / .5);
 
-  --success: #2e7d32;
-  --success-bg: #e8f5e9;
-  --warn: #f0851e;
-  --warn-bg: #fff3e0;
-  --danger: #cc0000;
-  --danger-bg: #fef2f2;
+  /* Lifted off the shared --rim (rgba(255,255,255,.08)), which is a Manual
+     value read at desk distance. See the note at the top of this file. */
+  --border: rgb(255 255 255 / .24);
+  --border-light: rgb(255 255 255 / .13);
 
-  /* Movement category colors */
-  --cat-lunge: #e03030;
-  --cat-single-leg-dip: #f0851e;
-  --cat-shoulder-reach: #2471a3;
-  --cat-trunk-rotation: #6f42c1;
-  --cat-cervical-rotation: #2e7d32;
+  /* --accent and --warn are NOT declared here. They are the shared tokens, and
+     this file must not shadow them — see finding (c). Use rgb(var(--accent)). */
 
-  /* Exercise type accents */
-  --type-stretch: #4a9fe0;
-  --type-stability: #f0851e;
-  --type-strength: #e03030;
+  /* Derived from the shared accent (#c8192e) rather than picked: a hover state
+     lightens on a dark ground, and the accent at full strength is too close to
+     the ink for body text on navy. Stated as literals because color-mix() is
+     not safe to assume on whatever phone an employee happens to carry. */
+  --accent-hover: #d8384c;
+  --accent-bg: rgb(var(--accent) / .18);
+  --accent-text: #ef7a88;
 
-  --header-bg: #111111;
-  --header-text: #ffffff;
+  /* Status. The shared semantic tokens, lightened where the shared value is a
+     dark hue sitting on a dark ground — --ok is #2e7d32, which reads as almost
+     black on navy. Never --accent: --bad and --accent are the same hue today
+     and are separate names so one can move without the other. */
+  --success: #56c15b;
+  --success-bg: rgb(var(--ok) / .2);
+  --warn-bg: rgb(var(--warn) / .2);
+  --danger: #ef5a6b;
+  --danger-bg: rgb(var(--bad) / .2);
 
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.08);
-  --shadow-md: 0 3px 12px rgba(0,0,0,.1);
-  --shadow-lg: 0 10px 40px rgba(0,0,0,.2);
-  --overlay: rgba(0,0,0,.45);
+  /* Chrome. The Manual's header is a card on the brand navy; on a phone it stays
+     a full-bleed sticky bar (see .app-header in app.css) and only the colour is
+     shared. */
+  --header-bg: rgb(var(--brand));
+  --header-text: #fff;
 
-  /* Sizing — generous for factory workers reading at arm's length */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
+  --shadow-md: 0 3px 12px rgba(0,0,0,.5);
+  --shadow-lg: var(--shadow-card);
+  --overlay: rgb(var(--brand) / .75);
+}
+
+:root[data-theme="light"] {
+  --bg: rgb(var(--depth));
+  --bg-card: rgb(var(--surface));
+  --bg-input: rgb(var(--surface));
+  --bg-section: var(--panel);
+  --bg-hover: var(--panel-mid);
+
+  --text: rgb(var(--ink));
+  --text-secondary: rgb(var(--ink) / .74);
+  --text-muted: rgb(var(--ink) / .55);
+
+  --border: rgb(14 29 39 / .3);
+  --border-light: rgb(14 29 39 / .14);
+
+  --accent-hover: #a41526;
+  --accent-bg: rgb(var(--accent) / .1);
+  --accent-text: rgb(var(--accent));
+
+  --success: rgb(var(--ok));
+  --success-bg: rgb(var(--ok-tint));
+  --warn-bg: rgb(var(--warn-tint));
+  --danger: rgb(var(--bad));
+  --danger-bg: rgb(var(--bad-tint));
+
+  --header-bg: rgb(var(--brand));
+  --header-text: #fff;
+
+  --shadow-sm: 0 1px 4px rgba(14,29,39,.08);
+  --shadow-md: 0 3px 12px rgba(14,29,39,.1);
+  --shadow-lg: var(--shadow-card);
+  --overlay: rgb(var(--brand) / .5);
+}
+
+/* Cadence's own sizing, kept by the plan rather than inherited. A phone held at
+   arm's length in a plant is a different instrument from a laptop at a desk, and
+   this is the one employee-facing app in the estate. */
+:root {
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
 
-  --tap-min: 48px;       /* min tap target */
-  --tap-comfortable: 56px; /* primary actions */
+  /* Aliases onto the shared touch tokens, which are Cadence's own values that
+     graduated into the shared file at step 1. Kept as names because app.css
+     reads them 7 times and they say what they are for. */
+  --tap-min: var(--tap);              /* 48px — min tap target */
+  --tap-comfortable: var(--tap-primary); /* 56px — primary actions */
 
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+  /* The Manual's stack. On a phone every app in the estate falls to the device
+     sans-serif, which is what Cadence already did by naming SF/Roboto directly;
+     on the admin desktop this renders Trebuchet MS and matches the Manual. */
+  --font: var(--font-body);
 
-[data-theme="dark"] {
-  --bg: #0a0a0a;
-  --bg-card: #161616;
-  --bg-input: #1e1e1e;
-  --bg-section: #1a1a1a;
-  --bg-hover: #252525;
-  --text: #e8e8e8;
-  --text-secondary: #b8b8b8;
-  --text-muted: #888;
-  --border: #333;
-  --border-light: #282828;
-
-  --accent: #e03030;
-  --accent-hover: #f04545;
-  --accent-bg: #2a1212;
-  --accent-text: #f06060;
-
-  --success: #4caf50;
-  --success-bg: #14281a;
-  --warn: #f0851e;
-  --warn-bg: #2a1f10;
-  --danger: #e03030;
-  --danger-bg: #2a1212;
-
-  --cat-lunge: #e03030;
-  --cat-single-leg-dip: #f0851e;
-  --cat-shoulder-reach: #4a9fe0;
-  --cat-trunk-rotation: #9d6fdf;
-  --cat-cervical-rotation: #4caf50;
-
-  --type-stretch: #4a9fe0;
-  --type-stability: #f0851e;
-  --type-strength: #e03030;
-
-  --header-bg: #0e0e0e;
-  --header-text: #ffffff;
-
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
-  --shadow-md: 0 3px 12px rgba(0,0,0,.5);
-  --shadow-lg: 0 10px 40px rgba(0,0,0,.7);
-  --overlay: rgba(0,0,0,.75);
+  --size-base: 18px;  /* Cadence's own; larger for reading at arm's length */
 }
 
 html {
-  font-size: 18px; /* larger base for readability at arm's length */
+  font-size: var(--size-base);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -158,6 +214,9 @@ img {
 
 /* ── Utility primitives ── */
 
+/* The Manual's pill, at Cadence's tap size. The plan gives buttons to the
+   Manual and tap targets to the phone, and they do not conflict: a 56px-tall
+   pill is both. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -165,8 +224,8 @@ img {
   gap: 8px;
   min-height: var(--tap-comfortable);
   padding: 0 24px;
-  border-radius: var(--radius-md);
-  background: var(--accent);
+  border-radius: var(--r-pill);
+  background: rgb(var(--accent));
   color: #fff;
   font-weight: 600;
   font-size: 1rem;
@@ -206,7 +265,7 @@ img {
 
 .input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: rgb(var(--accent));
 }
 
 .card {

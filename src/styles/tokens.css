@@ -1,0 +1,118 @@
+/* HMA Cadence's copy of design/tokens.css — DESIGN-SYSTEM-PLAN step 5.
+ *
+ * Cadence is a separate repository that deploys independently, so it cannot
+ * `@import` the suite's `design/tokens.css` the way the Manual and HMA-AI do,
+ * and it is not a single HTML file that has to open from a filesystem either.
+ * It is a THIRD consumption category, and the plan recorded on 2026-09-10 that
+ * step 7's drift test only knew about the first two — so this copy was the one
+ * copy in the estate that nothing would have checked. `test/designTokens.test.js`
+ * in this repo and `test_design_tokens.py` in the suite both cover it now.
+ *
+ * DO NOT EDIT THE BLOCK BELOW. Copy it from `design/tokens.css` verbatim; the
+ * copy is the contract and editing it in place is precisely the drift the tests
+ * exist for. Cadence's own vocabulary is defined from these tokens in
+ * `theme.css`, which is where an app-local decision belongs.
+ */
+
+/* ==== SHARED TOKENS — COPY START (keep byte-identical across apps) ==== */
+:root {
+  /* Type. The Manual's stack, unchanged. Avenir Next is not installed on ATI
+   * machines and never will be, so this renders as Trebuchet MS here — that is
+   * the face the owner chose, seen as it actually draws. Trebuchet is a
+   * Microsoft-licensed face that cannot be embedded as a web font and ships on
+   * neither iOS nor Android, so on a phone or the tablet every app falls to the
+   * device sans-serif. Stated, not solved: solving it means changing the face. */
+  --font-body: "Avenir Next", "Trebuchet MS", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  /* Brand. Static across themes. The logo's red is #cc2200 and the Tracker and
+   * Overlay both use it; the Manual's is #c8192e and the owner prefers it.
+   * Recorded rather than reconciled — the logo image is not being redrawn. */
+  --accent: 200 25 46;  /* #c8192e */
+  --brand:   14 29 39;  /* #0e1d27 */
+  --clay:   232 117  78;  /* #e8754e */
+  --sand:   196 185 154;  /* #c4b99a */
+
+  /* Ground — dark. This is the default theme in both React apps today, and the
+   * Manual and HMA-AI already agree on it byte for byte. */
+  --depth:    14  29  39;
+  --surface:  22  41  58;
+  --ink:     237 232 226;
+  --mist:     37  32  32;
+  --panel:     rgba(255,255,255,0.06);
+  --panel-mid: rgba(255,255,255,0.10);
+  --panel-hi:  rgba(255,255,255,0.16);
+  --rim:       rgba(255,255,255,0.08);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06);
+
+  /* Semantic status. NEW to the Manual as names, not as colours — it reaches
+   * for Tailwind's greens and reds ad hoc today. The values are the Tracker's
+   * and Overlay's, so "pain" and "unanswered" finally mean one colour estate-
+   * wide. Never use --accent for status: bad and accent are the same hue today
+   * and must be able to move apart. */
+  --ok:    46 125  50;  --ok-tint:   232 245 233;
+  --warn: 249 168  37;  --warn-tint: 255 243 205;
+  --hot:  230  81   0;  --hot-tint:  255 248 232;
+  --bad:  200  25  46;  --bad-tint:  253 232 232;
+
+  /* Two clinical findings that are not severities and must never be read as
+   * one. Blue is hypermobility, orange (--hot) is osteoarthritis, and the
+   * Tracker and the Overlay already agree on both -- the Overlay's stylesheet
+   * says so in as many words: "so a colour never means two things across the
+   * two apps." Added 2026-09-08 building step 2, because the plan's token list
+   * omitted a colour two apps were already sharing, which is the same way the
+   * light theme went missing. */
+  --hyper: 21 101 192;  --hyper-tint: 232 238 255;
+
+  /* Movement and exercise-type colour, Cadence's and today unique to it (plan
+   * §1). They graduate into the shared file because they are keyed to the five
+   * movements and three exercise types the whole estate already shares -- the
+   * same reason exercise IDs are public identifiers. Nothing outside Cadence
+   * uses them yet, and the other apps carry them unused rather than each
+   * inventing a second set the day one of them needs a movement colour.
+   *
+   * Left as hex, not RGB triplets, because nothing needs an alpha channel on
+   * them and converting would change the values in a step whose whole promise
+   * is that it does not. */
+  --cat-lunge:             #e03030;
+  --cat-single-leg-dip:    #f0851e;
+  --cat-shoulder-reach:    #2471a3;
+  --cat-trunk-rotation:    #6f42c1;
+  --cat-cervical-rotation: #2e7d32;
+
+  --type-stretch:   #4a9fe0;
+  --type-stability: #f0851e;
+  --type-strength:  #e03030;
+
+  /* Shape — the Manual's. .card is rounded-3xl, buttons are rounded-full. */
+  --r-card:  24px;
+  --r-pill:  999px;
+  --r-input: 12px;
+
+  /* Touch. Cadence's, kept for anything a person taps on a phone or the tablet:
+   * arm's length in a plant is a different instrument from a laptop at a desk. */
+  --tap:         48px;
+  --tap-primary: 56px;
+
+  /* Screen type scale. Every app sets --size-base for itself: the Tracker keeps
+   * its 22px (owner, 2026-09-06 — "I like Tracker's larger font size"), the
+   * Overlay is 18px today, the React apps sit on Tailwind's 16px. The scale is
+   * a token so the difference is a declared choice rather than a drift. */
+  --size-base: 16px;
+}
+
+:root.light,
+:root[data-theme="light"] {
+  /* Ground — light. Heather, by the owner's decision 2026-09-08; the reasoning
+   * and what it cost are in "The light theme" above the COPY START marker. */
+  --depth:    226 229 233;
+  --surface:  244 246 248;
+  --ink:       26  36  45;
+  --mist:     214 221 229;
+  --panel:     rgba(14,29,39,0.045);
+  --panel-mid: rgba(14,29,39,0.08);
+  --panel-hi:  rgba(14,29,39,0.13);
+  --rim:       rgba(14,29,39,0.12);
+  --shadow-card: 0 1px 2px rgba(14,29,39,0.06), 0 8px 24px rgba(14,29,39,0.07);
+}
+/* ==== SHARED TOKENS — COPY END ==== */

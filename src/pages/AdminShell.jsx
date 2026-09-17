@@ -5,7 +5,7 @@ export default function AdminShell({ children }) {
   const { employee, signOut } = useAuth();
   return (
     <>
-      <header className="app-header">
+      <header className="app-header app-header--admin">
         <div className="app-header__brand">
           <div className="app-header__brand-mark">
             <img src="/hendrickson-logo.jpg" alt="Hendrickson" />
