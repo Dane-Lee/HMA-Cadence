@@ -16,64 +16,73 @@
 
 /* ==== SHARED TOKENS — COPY START (keep byte-identical across apps) ==== */
 :root {
-  /* Type. The Manual's stack, unchanged. Avenir Next is not installed on ATI
-   * machines and never will be, so this renders as Trebuchet MS here — that is
-   * the face the owner chose, seen as it actually draws. Trebuchet is a
-   * Microsoft-licensed face that cannot be embedded as a web font and ships on
-   * neither iOS nor Android, so on a phone or the tablet every app falls to the
-   * device sans-serif. Stated, not solved: solving it means changing the face. */
-  --font-body: "Avenir Next", "Trebuchet MS", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
-
-  /* Brand. Static across themes. The logo's red is #cc2200 and the Tracker and
-   * Overlay both use it; the Manual's is #c8192e and the owner prefers it.
-   * Recorded rather than reconciled — the logo image is not being redrawn. */
-  --accent: 200 25 46;  /* #c8192e */
-  --brand:   14 29 39;  /* #0e1d27 */
-  --clay:   232 117  78;  /* #e8754e */
-  --sand:   196 185 154;  /* #c4b99a */
-
-  /* Ground — dark. This is the default theme in both React apps today, and the
-   * Manual and HMA-AI already agree on it byte for byte. */
-  --depth:    14  29  39;
-  --surface:  22  41  58;
-  --ink:     237 232 226;
-  --mist:     37  32  32;
-  --panel:     rgba(255,255,255,0.06);
-  --panel-mid: rgba(255,255,255,0.10);
-  --panel-hi:  rgba(255,255,255,0.16);
-  --rim:       rgba(255,255,255,0.08);
-  --shadow-card: 0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06);
-
-  /* Semantic status. NEW to the Manual as names, not as colours — it reaches
-   * for Tailwind's greens and reds ad hoc today. The values are the Tracker's
-   * and Overlay's, so "pain" and "unanswered" finally mean one colour estate-
-   * wide. Never use --accent for status: bad and accent are the same hue today
-   * and must be able to move apart. */
-  --ok:    46 125  50;  --ok-tint:   232 245 233;
-  --warn: 249 168  37;  --warn-tint: 255 243 205;
-  --hot:  230  81   0;  --hot-tint:  255 248 232;
-  --bad:  200  25  46;  --bad-tint:  253 232 232;
-
-  /* Two clinical findings that are not severities and must never be read as
-   * one. Blue is hypermobility, orange (--hot) is osteoarthritis, and the
-   * Tracker and the Overlay already agree on both -- the Overlay's stylesheet
-   * says so in as many words: "so a colour never means two things across the
-   * two apps." Added 2026-09-08 building step 2, because the plan's token list
-   * omitted a colour two apps were already sharing, which is the same way the
-   * light theme went missing. */
-  --hyper: 21 101 192;  --hyper-tint: 232 238 255;
-
-  /* Movement and exercise-type colour, Cadence's and today unique to it (plan
-   * §1). They graduate into the shared file because they are keyed to the five
-   * movements and three exercise types the whole estate already shares -- the
-   * same reason exercise IDs are public identifiers. Nothing outside Cadence
-   * uses them yet, and the other apps carry them unused rather than each
-   * inventing a second set the day one of them needs a movement colour.
+  /* Type. ATI Brand Guide §3.1. The faces are embedded by
+   * design/brand-fonts.css; these stacks name them and fall back to something
+   * of the same shape rather than to a default serif.
    *
-   * Left as hex, not RGB triplets, because nothing needs an alpha channel on
-   * them and converting would change the values in a step whose whole promise
-   * is that it does not. */
+   * Barlow Condensed is the DISPLAY face and the guide sets it ALL UPPERCASE.
+   * That is a typographic treatment applied in CSS (text-transform), so app
+   * markup stays in Title Case per the owner's rule 1 in DESIGN-RULES.md. Both
+   * rules hold: the source reads Title Case, the screen reads ALL CAPS. */
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sub:     "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --font-body:    "Bitter", Georgia, "Times New Roman", serif;
+  --font-mono:    ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  /* Brand. Static across themes, straight out of guide §2.3 and §2.5.
+   * --accent is ATI Bright Red, PMS 185. The logo is drawn in this red and no
+   * other: "Do not deviate from approved primary brand colors for the logo". */
+  --accent:  228   0  43;  /* #E4002B — ATI Bright Red, PMS 185 */
+  --accent-deep: 163 13 29;  /* #A30D1D — ATI Dark Red, the gradient's dark end */
+  --brand:     0   0   0;  /* #000000 — ATI Bold Black */
+  --paper:   255 255 255;  /* #FFFFFF — ATI Crisp White */
+  --grey80:   51  51  51;  /* #333333 — secondary */
+  --grey20:  204 204 204;  /* #CCCCCC — secondary */
+
+  /* The two ATI gradients, guide §2.4. 50% blend point at the centre, never on
+   * an angle, never with white, never with a secondary colour. */
+  --grad-light: linear-gradient(180deg, rgb(var(--accent-deep)) 0%, rgb(var(--accent)) 100%);
+  --grad-dark:  linear-gradient(180deg, rgb(var(--brand)) 0%, rgb(var(--accent)) 100%);
+
+  /* Ground — dark. ATI Bold Black and the 80% grey, which is exactly what the
+   * guide's dark layouts use: "Body copy - Set as white or 20% black on black". */
+  --depth:     0   0   0;
+  --surface:  26  26  26;
+  --ink:     255 255 255;
+  --mist:     51  51  51;
+  --panel:     rgba(255,255,255,0.08);
+  --panel-mid: rgba(255,255,255,0.14);
+  --panel-hi:  rgba(255,255,255,0.22);
+  --rim:       rgba(255,255,255,0.30);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08);
+
+  /* Semantic status. Constrained by the palette, and that constraint is the
+   * point: the guide offers exactly two supporting colours and says they are
+   * for "directional signage, alerts, and key information that needs to stand
+   * out from our core Red, Black, and White", used "with direct intent".
+   *
+   * THERE IS NO GREEN IN THE ATI PALETTE. The old --ok was #2e7d32, invented.
+   * "Clear" is now the absence of a flag plus the brand's own greys, which is
+   * the honest reading: a clean score is not an alert.
+   *
+   * Never use --accent for status. --bad and --accent are the same value today
+   * and stay separate names so one can move without the other. */
+  --ok:    51  51  51;  --ok-tint:   238 238 238;  /* neutral: clean is not an alert */
+  --warn: 255 158  27;  --warn-tint: 255 240 214;  /* #FF9E1B, PMS 1375 */
+  --hot:  255 158  27;  --hot-tint:  255 231 189;  /* the same yellow, deeper tint */
+  --bad:  228   0  43;  --bad-tint:  255 224 230;  /* #E4002B */
+
+  /* Two clinical findings that are not severities and must never read as one.
+   * Hypermobility is the brand's PMS 294 blue; osteoarthritis is the PMS 1375
+   * yellow (--hot above). Both are "supporting colours" in guide §2.5, which is
+   * precisely their job here — key information that must stand out from the
+   * core three without claiming a severity. */
+  --hyper:  0  47 108;  --hyper-tint: 214 226 242;  /* #002F6C, PMS 294 */
+
+  /* Movement and exercise-type colour, Cadence's. Kept as hex: they key the five
+   * movements and three exercise types the whole estate shares, they are data
+   * categories rather than brand expression, and the guide does not legislate
+   * categorical colour. Flagged for the owner rather than silently rebranded. */
   --cat-lunge:             #e03030;
   --cat-single-leg-dip:    #f0851e;
   --cat-shoulder-reach:    #2471a3;
@@ -84,35 +93,36 @@
   --type-stability: #f0851e;
   --type-strength:  #e03030;
 
-  /* Shape — the Manual's. .card is rounded-3xl, buttons are rounded-full. */
+  /* Shape. The guide legislates no radius, so this is the estate's own choice
+   * and is kept from the previous system rather than re-argued. */
   --r-card:  24px;
   --r-pill:  999px;
   --r-input: 12px;
 
-  /* Touch. Cadence's, kept for anything a person taps on a phone or the tablet:
+  /* Touch. Cadence's, kept for anything tapped on a phone or the tablet:
    * arm's length in a plant is a different instrument from a laptop at a desk. */
   --tap:         48px;
   --tap-primary: 56px;
 
   /* Screen type scale. Every app sets --size-base for itself: the Tracker keeps
    * its 22px (owner, 2026-09-06 — "I like Tracker's larger font size"), the
-   * Overlay is 18px today, the React apps sit on Tailwind's 16px. The scale is
-   * a token so the difference is a declared choice rather than a drift. */
+   * Overlay is 18px, Cadence 18px, the React apps sit on Tailwind's 16px. */
   --size-base: 16px;
 }
 
 :root.light,
 :root[data-theme="light"] {
-  /* Ground — light. Heather, by the owner's decision 2026-09-08; the reasoning
-   * and what it cost are in "The light theme" above the COPY START marker. */
-  --depth:    226 229 233;
-  --surface:  244 246 248;
-  --ink:       26  36  45;
-  --mist:     214 221 229;
-  --panel:     rgba(14,29,39,0.045);
-  --panel-mid: rgba(14,29,39,0.08);
-  --panel-hi:  rgba(14,29,39,0.13);
-  --rim:       rgba(14,29,39,0.12);
-  --shadow-card: 0 1px 2px rgba(14,29,39,0.06), 0 8px 24px rgba(14,29,39,0.07);
+  /* Ground — light. 20% Black page, Crisp White cards; see "The light theme"
+   * above the COPY START marker for why the page is not white. */
+  --depth:   204 204 204;
+  --surface: 255 255 255;
+  --ink:       0   0   0;
+  --mist:    204 204 204;
+  --panel:     rgba(0,0,0,0.05);
+  --panel-mid: rgba(0,0,0,0.09);
+  --panel-hi:  rgba(0,0,0,0.14);
+  --rim:       rgba(0,0,0,0.22);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.10);
+  --ok:       51  51  51;
 }
 /* ==== SHARED TOKENS — COPY END ==== */

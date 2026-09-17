@@ -86,15 +86,46 @@ describe('the shared design tokens', () => {
     ).toBe(expected);
   });
 
-  it('is imported before anything that uses it', () => {
-    // A CSS @import must precede every rule in its file, so this is also the
-    // only place it can go -- but the failure mode if it were dropped is a page
-    // of `var(--accent)` resolving to nothing, which renders as inherited
-    // colour rather than as an error.
+  it('is imported, along with the brand faces, before anything that uses them', () => {
+    // A CSS @import must precede every rule in its file, so position is forced
+    // -- but the failure mode if one were dropped is quiet: `var(--accent)`
+    // resolves to nothing and the page renders in inherited colour rather than
+    // throwing, and a missing @font-face just falls back to a system face that
+    // looks plausible.
+    //
+    // Two imports since 2026-09-17: the tokens, and `brand-fonts.css`, which
+    // carries Barlow Condensed / Barlow / Bitter embedded. The faces come FIRST
+    // because tokens.css names them in --font-display and friends.
     const theme = readFileSync(
       fileURLToPath(new URL('../src/styles/theme.css', import.meta.url)),
       'utf8',
     );
-    expect(theme.trimStart().startsWith("@import './tokens.css';")).toBe(true);
+    const imports = [...theme.matchAll(/@import\s+'([^']+)'/g)].map((m) => m[1]);
+    expect(imports, 'theme.css must import the faces then the tokens').toEqual([
+      './brand-fonts.css',
+      './tokens.css',
+    ]);
+
+    // Nothing may precede them but comments and whitespace.
+    const beforeFirstImport = theme.slice(0, theme.indexOf('@import'));
+    expect(beforeFirstImport.replace(/\/\*[\s\S]*?\*\//g, '').trim()).toBe('');
+  });
+
+  it('ships the brand faces it names', () => {
+    // tokens.css names Barlow Condensed, Barlow and Bitter. If the embedded file
+    // is missing or has lost a family, every one of them silently falls back to
+    // a system face -- which on a plant phone is exactly the substitution the
+    // brand faces exist to prevent.
+    const faces = readFileSync(
+      fileURLToPath(new URL('../src/styles/brand-fonts.css', import.meta.url)),
+      'utf8',
+    );
+    for (const family of ['Barlow Condensed', 'Barlow', 'Bitter']) {
+      expect(
+        faces.includes(`font-family:'${family}'`),
+        `${family} is not embedded in src/styles/brand-fonts.css`,
+      ).toBe(true);
+    }
+    expect(faces.includes('base64'), 'the faces are referenced, not embedded').toBe(true);
   });
 });

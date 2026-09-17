@@ -1,3 +1,4 @@
+@import './brand-fonts.css';
 @import './tokens.css';
 
 /* ─────────────────────────────────────────────────────
@@ -158,9 +159,13 @@
   --tap-min: var(--tap);              /* 48px — min tap target */
   --tap-comfortable: var(--tap-primary); /* 56px — primary actions */
 
-  /* The Manual's stack. On a phone every app in the estate falls to the device
-     sans-serif, which is what Cadence already did by naming SF/Roboto directly;
-     on the admin desktop this renders Trebuchet MS and matches the Manual. */
+  /* THE BRAND FACES, AND ON A PHONE THIS IS THE POINT OF THEM.
+     Every other stack the estate has tried -- Avenir Next / Trebuchet MS, or
+     Cadence's own -apple-system / Segoe UI / Roboto -- resolves to whatever the
+     device happens to have. Barlow and Bitter are SIL Open Font License, so
+     they are embedded in the bundle and an employee's phone renders the actual
+     ATI typefaces rather than a substitute. This is the one app where that was
+     previously impossible, and it is the one app a non-ATI person holds. */
   --font: var(--font-body);
 
   --size-base: 18px;  /* Cadence's own; larger for reading at arm's length */
@@ -169,6 +174,26 @@
 html {
   font-size: var(--size-base);
   -webkit-text-size-adjust: 100%;
+}
+
+/* ATI Brand Guide v1.8 §3.1 — display, subhead, body. The uppercase on the
+   display face is a CSS treatment; markup stays Title Case per DESIGN-RULES
+   rule 1. Employee-facing screens keep generous line-height: this is read at
+   arm's length, standing, often in poor light. */
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  line-height: 1.12;
+}
+h3, h4 {
+  font-family: var(--font-sub);
+  font-weight: 700;
+  line-height: 1.25;
+}
+button, .btn, .label, input, select, textarea {
+  font-family: var(--font-sub);
 }
 
 body {
