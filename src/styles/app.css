@@ -164,22 +164,58 @@
    Hendrickson mark is black on white, and the ATI 2/C POSITIVE lockup is the
    guide's choice for a white ground (1.3). A thin divider keeps them from
    reading as one mark. This is the same pairing the app header uses. */
+/* Owner, 2026-09-18: "When I switch to light mode in Cadence in the login
+   screen the box around the Hendrickson and ATI logo essentially disappears."
+
+   The plate has to stay white -- the Hendrickson mark is black line art and the
+   ATI lockup here is the 2/C POSITIVE version, and both need a light ground
+   (Brand Guide 1.5/1.6). But on a light theme the card behind it is also near
+   white, so a white plate with no edge has nothing to be seen against.
+
+   So the plate keeps its white ground and gains an EDGE, and the edge is the
+   part that changes with the theme: barely-there on dark, where the contrast
+   against the card already does the work, and a definite line on light, where
+   it is the only thing doing it. */
 .login-card__marks {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
   border-radius: 12px;
+  border: 1px solid rgb(0 0 0 / .18);
   background: #fff;
 }
 .login-card__mark-h { height: 38px; width: auto; display: block; }
 .login-card__mark-ati { height: 30px; width: auto; display: block; }
 .login-card__divider { width: 1px; align-self: stretch; background: rgba(0,0,0,.18); }
+/* The light theme is where the plate needs its own edge -- see above. Written
+   for both ways the theme can be light: the explicit choice, and the system
+   default with nothing stamped on the root. */
+:root[data-theme="light"] .login-card__marks {
+  border-color: rgb(var(--ink) / .28);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .10);
+}
 .login-card__brand { justify-content: space-between; }
 .login-card__theme { flex: none; }
 .login-card__title { font-weight: 700; margin: 14px 0 6px; font-size: 1.05rem; }
 .login-card__site { font-size: .8rem; font-weight: 400; }
 .login-card__help { font-size: .8rem; }
+
+/* SHOW / HIDE on a PIN field (owner, 2026-09-18). The button sits inside the
+   field's box rather than beside it, so the field keeps its full tap width, and
+   the input gets right padding equal to the button so long input never runs
+   underneath it. Sized to --tap-min because a thumb presses it. */
+.secret { position: relative; display: block; }
+.secret > .input { padding-right: calc(var(--tap-min, 48px) + 4px); }
+.reveal-btn {
+  position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+  width: var(--tap-min, 48px); height: var(--tap-min, 48px);
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; border-radius: 10px; cursor: pointer;
+  background: transparent; color: var(--text-muted);
+}
+.reveal-btn:hover { color: var(--text); background: var(--bg-hover); }
+.reveal-btn:focus-visible { outline: 2px solid var(--border); outline-offset: 2px; }
 
 /* The info icon, Cadence's copy. DESIGN-RULES rule 2. Tap-reachable via focus. */
 .info {

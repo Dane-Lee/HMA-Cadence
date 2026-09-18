@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useReveal } from '../components/RevealButton.jsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import { pinProblem, PIN_MIN, PIN_MAX } from '../lib/data/pin.js';
@@ -12,6 +13,8 @@ export default function SetPin() {
   const { employee, changePin } = useAuth();
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
+  const newReveal = useReveal();
+  const confirmReveal = useReveal();
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -63,19 +66,22 @@ export default function SetPin() {
 
         <div className="field">
           <label className="label" htmlFor="newPin">New PIN</label>
-          <input
-            id="newPin"
-            className="input"
-            type="password"
-            inputMode="numeric"
-            autoComplete="new-password"
-            placeholder="••••"
-            maxLength={PIN_MAX}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            required
-            autoFocus
-          />
+          <div className="secret">
+            <input
+              id="newPin"
+              className="input"
+              type={newReveal.type}
+              inputMode="numeric"
+              autoComplete="new-password"
+              placeholder="••••"
+              maxLength={PIN_MAX}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+              required
+              autoFocus
+            />
+            {newReveal.button}
+          </div>
           {liveProblem && (
             <div className="muted" style={{ fontSize: '.8rem', marginTop: 4 }}>{liveProblem}</div>
           )}
@@ -83,18 +89,21 @@ export default function SetPin() {
 
         <div className="field">
           <label className="label" htmlFor="confirmPin">Confirm PIN</label>
-          <input
-            id="confirmPin"
-            className="input"
-            type="password"
-            inputMode="numeric"
-            autoComplete="new-password"
-            placeholder="••••"
-            maxLength={PIN_MAX}
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value.replace(/\D/g, ''))}
-            required
-          />
+          <div className="secret">
+            <input
+              id="confirmPin"
+              className="input"
+              type={confirmReveal.type}
+              inputMode="numeric"
+              autoComplete="new-password"
+              placeholder="••••"
+              maxLength={PIN_MAX}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value.replace(/\D/g, ''))}
+              required
+            />
+            {confirmReveal.button}
+          </div>
         </div>
 
         {error && <div className="login-error">{error}</div>}

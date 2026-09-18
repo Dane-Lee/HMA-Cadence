@@ -4,11 +4,13 @@ import { useAuth } from '../lib/auth.jsx';
 import StandaloneEmptyNotice from '../components/StandaloneEmptyNotice.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import { useVeil } from '../components/PageTransition.jsx';
+import { useReveal } from '../components/RevealButton.jsx';
 
 export default function Login() {
   const { signIn, loading } = useAuth();
   const navigate = useNavigate();
   const veil = useVeil();
+  const pinReveal = useReveal();
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState(null);
@@ -82,18 +84,21 @@ export default function Login() {
 
         <div className="field">
           <label className="label" htmlFor="pin">PIN</label>
-          <input
-            id="pin"
-            className="input"
-            type="password"
-            inputMode="numeric"
-            autoComplete="current-password"
-            placeholder="••••"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            required
-          />
+          <div className="secret">
+            <input
+              id="pin"
+              className="input"
+              type={pinReveal.type}
+              inputMode="numeric"
+              autoComplete="current-password"
+              placeholder="••••"
+              maxLength={6}
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              required
+            />
+            {pinReveal.button}
+          </div>
         </div>
 
         {error && <div className="login-error">{error}</div>}
