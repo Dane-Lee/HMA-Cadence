@@ -12,5 +12,90 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- BOOT GUARD. Owner, 2026-09-18: "Cadence is still showing just a blank,
+         black screen."
+
+         The app itself renders -- verified that day against the dev server, a
+         local client build, the live deployment, and a second load with the
+         service worker controlling. All four painted the login. So what he was
+         seeing was not in the code, and no code fix could have reached it: a
+         browser that has cached a broken shell keeps serving it no matter what
+         ships next.
+
+         This is the answer to that class of failure rather than to one instance
+         of it. It is INLINE and NOT a module on purpose -- the failure mode
+         worth catching is the bundle never loading at all, and a guard inside
+         main.jsx cannot run when main.jsx is the thing that 404s.
+
+         It never hides a working app: it only acts when #root is still empty
+         after the timeout. One automatic recovery (drop the service worker and
+         every cache, reload once, guarded by sessionStorage so it cannot loop),
+         and if that does not take, a plain visible panel with a button. The
+         rule is the one PageTransition already follows -- worst case is a
+         screen that says something, never a screen that says nothing. -->
+    <script>
+      (function () {
+        var BOOT_MS = 5000, FLAG = 'hma-cadence-recovered';
+        function empty() {
+          var r = document.getElementById('root');
+          return !r || r.children.length === 0;
+        }
+        function wipe() {
+          var jobs = [];
+          try {
+            if (navigator.serviceWorker) {
+              jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+                return Promise.all(rs.map(function (r) { return r.unregister(); }));
+              }));
+            }
+          } catch (e) {}
+          try {
+            if (window.caches) {
+              jobs.push(caches.keys().then(function (ks) {
+                return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+              }));
+            }
+          } catch (e) {}
+          return Promise.all(jobs).catch(function () {});
+        }
+        function panel() {
+          var r = document.getElementById('root');
+          if (!r) return;
+          r.innerHTML =
+            '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;' +
+            'padding:24px;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif">' +
+            '<div style="max-width:320px;text-align:center">' +
+            '<div style="font-size:1.4rem;font-weight:700;letter-spacing:.02em;margin-bottom:8px">' +
+            'Cadence Did Not Load</div>' +
+            '<p style="color:#ccc;font-size:.95rem;line-height:1.5;margin:0 0 20px">' +
+            'Check your connection, then try again.</p>' +
+            '<button id="hma-retry" style="width:100%;min-height:48px;border:0;border-radius:8px;' +
+            'background:#E4002B;color:#fff;font-size:1rem;font-weight:700;cursor:pointer">' +
+            'Reset And Reload</button></div></div>';
+          var b = document.getElementById('hma-retry');
+          if (b) b.onclick = function () {
+            b.disabled = true;
+            wipe().then(function () { location.reload(); });
+          };
+        }
+        function check() {
+          if (!empty()) return;
+          var tried;
+          try { tried = sessionStorage.getItem(FLAG); } catch (e) { tried = '1'; }
+          if (tried) { panel(); return; }
+          try { sessionStorage.setItem(FLAG, '1'); } catch (e) {}
+          wipe().then(function () { location.reload(); });
+        }
+        // A clean boot clears the flag, so a future failure still gets its one
+        // free recovery instead of going straight to the panel.
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            if (!empty()) { try { sessionStorage.removeItem(FLAG); } catch (e) {} }
+          }, 1500);
+        });
+        setTimeout(check, BOOT_MS);
+      })();
+    </script>
   </body>
 </html>
