@@ -214,19 +214,29 @@
 .app-header__tools { display: flex; align-items: center; gap: 6px; }
 
 /* ── Page transitions ──────────────────────────────────
-   Owner, 2026-09-17: a smooth, elegant fade after signing in. The wrapper
-   carries one of two phases; the login -> first screen change carries
-   `.page-slow` as well, which is the one moment given a flourish. Timings
-   here must agree with EXIT_MS / LOGIN_EXIT_MS in PageTransition.jsx. */
-.page { will-change: opacity, transform; }
-.page-enter { animation: page-in .32s cubic-bezier(.2,.7,.2,1) both; }
-.page-exit  { animation: page-out .18s ease-in both; pointer-events: none; }
-.page-slow.page-exit  { animation-duration: .42s; animation-timing-function: cubic-bezier(.4,0,.6,1); }
-.page-slow.page-enter { animation-duration: .6s; }
-@keyframes page-in  { from { opacity: 0; transform: translateY(10px) scale(.995); } to { opacity: 1; transform: none; } }
-@keyframes page-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px) scale(.995); } }
+   REWRITTEN 2026-09-17 after the first version showed the owner "just a black
+   fucking screen". Nothing here can leave a screen invisible any more:
+
+   `.page` plays a fade-IN on mount and nothing else -- PageTransition keys it
+   on the location, so every screen change mounts fresh. No exit phase, no
+   state that can stick. If the animation does not run, the screen appears.
+
+   `.veil` is the login flourish: a full-screen layer that fades to black over
+   the login, lets the route swap underneath at its peak, and lifts over the
+   first real screen. It only ever animates its own opacity, never takes
+   pointer events, and PageTransition lifts it after 1.5 s no matter what.
+   Down is quicker than up on purpose -- the reveal is the part you watch. */
+.page { animation: page-in .28s ease-out both; }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.veil {
+  position: fixed; inset: 0; z-index: 100; background: #000;
+  opacity: 0; pointer-events: none;
+  transition: opacity .48s cubic-bezier(.4,0,.2,1);
+}
+.veil--on { opacity: 1; transition-duration: .3s; }
 @media (prefers-reduced-motion: reduce) {
-  .page-enter, .page-exit { animation: none; }
+  .page { animation: none; }
+  .veil { transition: none; }
 }
 
 .login-card h1 { font-size: 1.5rem; margin: 16px 0 4px; }

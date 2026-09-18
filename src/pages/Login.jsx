@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import StandaloneEmptyNotice from '../components/StandaloneEmptyNotice.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
+import { useVeil } from '../components/PageTransition.jsx';
 
 export default function Login() {
   const { signIn, loading } = useAuth();
   const navigate = useNavigate();
+  const veil = useVeil();
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState(null);
@@ -19,7 +21,16 @@ export default function Login() {
       const dest = employee.must_change_pin
         ? '/set-pin'
         : employee.role === 'admin' ? '/admin' : '/today';
-      navigate(dest, { replace: true });
+      // The moment the owner asked for: the login fades to black, the first
+      // real screen is swapped in underneath at the peak, and the veil lifts
+      // over it. `reveal()` is in a finally so nothing can leave it down; the
+      // veil also has its own watchdog. See PageTransition.jsx.
+      try {
+        await veil.cover();
+        navigate(dest, { replace: true });
+      } finally {
+        veil.reveal();
+      }
     } catch (err) {
       setError(err.message ?? 'Could not sign in');
     }

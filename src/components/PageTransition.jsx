@@ -1,29 +1,37 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-/** A fade between screens, and a slower one out of the login.
+/** Screen transitions for Cadence: a fade-in on every screen, and a veil for the login.
  *
- * Owner, 2026-09-17: after signing in he wants "a smooth and elegant (sexy,
- * even) fade out/in transition" -- the kind of thing that makes someone say
- * "ooooh" the first time they open the app on their phone.
+ * REWRITTEN 2026-09-17, the same evening it was first built. The first version
+ * kept an "exit" phase in React state -- render the old screen at opacity 0
+ * for a beat, then swap. The owner opened it and saw *"just a black fucking
+ * screen. Nothing is loading at all."* An exit phase that depends on a timer to
+ * leave it is a screen that stays black the moment anything interrupts the
+ * timer, and it was not worth finding out which thing had.
  *
- * HOW IT WORKS. Every route change renders the OLD screen for one more beat
- * while it fades out and lifts a few pixels, then swaps in the new screen,
- * which fades up from slightly below. Two overlapping halves, so there is
- * never a frame of nothing. The login -> first screen change gets a longer,
- * slower curve than ordinary navigation: that is the one moment worth a
- * flourish, and the same flourish on every tab tap would be a delay.
+ * So the rule now: NOTHING here can leave a screen invisible. Two pieces:
  *
- * WHAT IT DOES NOT DO. No library -- this app runs on whatever phone an
- * employee has, and a 20 KB animation dependency is not worth a fade. And it
- * respects `prefers-reduced-motion`: on a phone that asked for less motion the
- * swap is instant, which is what "smooth" means to that person.
+ *   1. `PageTransition` keys its wrapper on the location, so every screen
+ *      change mounts fresh and plays a short fade-IN from CSS. There is no
+ *      exit phase and no state that could stick. If the animation does not
+ *      run for any reason, the screen simply appears.
  *
- * The heavy lifting is CSS (`.page-enter`, `.page-exit` in app.css). This
- * component only decides WHICH class the wrapper carries, and when.
+ *   2. The login gets the moment the owner asked for -- "a smooth and elegant
+ *      (sexy, even) fade out/in" -- through a VEIL: a full-screen layer that
+ *      fades to black over the login, the route changes underneath it at the
+ *      peak, and it fades back out over the first real screen. The veil is a
+ *      separate element that only ever animates its own opacity, it never
+ *      blocks input (`pointer-events: none`), and a watchdog lifts it after
+ *      1.5 s no matter what. Worst case is no effect, never a black screen.
+ *
+ * `useVeil()` gives a screen `cover()` and `reveal()`. Login is the only caller
+ * today; anything else that earns a flourish can use the same two calls.
  */
-const EXIT_MS = 180;
-const LOGIN_EXIT_MS = 420;
+const VeilContext = createContext({ cover: async () => {}, reveal: () => {} });
+
+const COVER_MS = 340;
+const WATCHDOG_MS = 1500;
 
 function reducedMotion() {
   try {
@@ -33,40 +41,38 @@ function reducedMotion() {
   }
 }
 
+export function useVeil() {
+  return useContext(VeilContext);
+}
+
 export default function PageTransition({ children }) {
   const location = useLocation();
-  const [shown, setShown] = useState({ key: location.key, path: location.pathname, children });
-  const [phase, setPhase] = useState('enter');
-  const [slow, setSlow] = useState(false);
-  const timer = useRef(null);
+  const [covered, setCovered] = useState(false);
+  const watchdog = useRef(null);
 
+  // The veil can never be left down. Whatever called cover() is expected to
+  // call reveal(); if it does not -- an exception, an unmount, a navigation
+  // that never completes -- this lifts it anyway.
   useEffect(() => {
-    if (location.key === shown.key) {
-      // Same screen re-rendering with new children; keep it current, no animation.
-      setShown((current) => ({ ...current, children }));
-      return undefined;
-    }
-    const leavingLogin = shown.path === '/login';
-    if (reducedMotion()) {
-      setShown({ key: location.key, path: location.pathname, children });
-      setPhase('enter');
-      return undefined;
-    }
-    setSlow(leavingLogin);
-    setPhase('exit');
-    timer.current = setTimeout(() => {
-      setShown({ key: location.key, path: location.pathname, children });
-      setPhase('enter');
-    }, leavingLogin ? LOGIN_EXIT_MS : EXIT_MS);
-    return () => clearTimeout(timer.current);
-    // `children` is deliberately not a dependency: a parent re-render must not
-    // restart the animation mid-fade.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
+    if (!covered) return undefined;
+    watchdog.current = setTimeout(() => setCovered(false), WATCHDOG_MS);
+    return () => clearTimeout(watchdog.current);
+  }, [covered]);
+
+  const cover = useCallback(() => {
+    if (reducedMotion()) return Promise.resolve();
+    setCovered(true);
+    return new Promise((resolve) => setTimeout(resolve, COVER_MS));
+  }, []);
+
+  const reveal = useCallback(() => setCovered(false), []);
 
   return (
-    <div className={`page page-${phase}${slow ? ' page-slow' : ''}`} key={shown.key}>
-      {shown.children}
-    </div>
+    <VeilContext.Provider value={{ cover, reveal }}>
+      <div className="page" key={location.key}>
+        {children}
+      </div>
+      <div className={covered ? 'veil veil--on' : 'veil'} aria-hidden="true" />
+    </VeilContext.Provider>
   );
 }
