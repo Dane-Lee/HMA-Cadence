@@ -50,7 +50,7 @@ export default function PlanSheet({ payload, codes, issued, keyIdHex }) {
   return (
     <section className="plan-sheet" aria-label="Printable exercise sheet">
       <header className="plan-sheet__head">
-        <h2>Your exercise program</h2>
+        <h2>Your Exercise Program</h2>
         <p className="plan-sheet__who">
           {name ?? 'Employee'}
           {employee?.employee_number ? ` · Badge ${employee.employee_number}` : ''}
@@ -88,7 +88,7 @@ export default function PlanSheet({ payload, codes, issued, keyIdHex }) {
 
       {exercises.length > 0 && (
         <div className="plan-sheet__list">
-          <h3>Your exercises</h3>
+          <h3>Your Exercises</h3>
           <p className="plan-sheet__hint">
             The same list your phone will show. If the codes will not scan, this is still
             everything you need.

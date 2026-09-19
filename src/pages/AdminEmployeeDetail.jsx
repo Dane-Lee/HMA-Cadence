@@ -133,7 +133,7 @@ export default function AdminEmployeeDetail() {
 
           {/* Per-exercise adherence */}
           <section className="detail-section">
-            <h2 className="detail-section__title">Exercises · this week</h2>
+            <h2 className="detail-section__title">Exercises · This Week</h2>
             <div className="admin-grid">
               {assignments.map((a) => {
                 const pct = a.scheduledCount ? Math.round((100 * a.completedCount) / a.scheduledCount) : 0;

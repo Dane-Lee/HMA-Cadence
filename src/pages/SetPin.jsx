@@ -57,7 +57,7 @@ export default function SetPin() {
           </div>
         </div>
 
-        <h1>Set your PIN</h1>
+        <h1>Set Your PIN</h1>
         <p className="muted">
           {firstName ? `Welcome, ${firstName}. ` : ''}
           You&rsquo;re using a temporary PIN. Choose a new {PIN_MIN}–{PIN_MAX} digit PIN

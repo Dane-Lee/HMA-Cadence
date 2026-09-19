@@ -216,7 +216,7 @@ export default function EmployeeToday() {
   if (!program) {
     return (
       <div className="empty-state">
-        <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>No active program yet</h2>
+        <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>No Active Program Yet</h2>
         <p>Once Dane finishes your HMA, your corrective exercises will appear here.</p>
       </div>
     );
@@ -229,7 +229,7 @@ export default function EmployeeToday() {
         {onboarding}
         <div className="empty-state">
           <div className="today-greeting" style={{ marginBottom: 12 }}>Hi {firstName} 👋</div>
-          <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>Nothing scheduled today</h2>
+          <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>Nothing Scheduled Today</h2>
           <p>Enjoy your rest day — your next exercises will be here when they’re due.</p>
         </div>
       </>

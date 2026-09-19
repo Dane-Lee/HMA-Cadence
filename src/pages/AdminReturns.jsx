@@ -58,7 +58,7 @@ export default function AdminReturns() {
 
   return (
     <>
-      <h1 className="page-title">Progress reports</h1>
+      <h1 className="page-title">Progress Reports</h1>
       <p className="page-subtitle">
         Paste an employee’s email here. Nothing leaves this machine.
       </p>

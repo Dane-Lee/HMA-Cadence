@@ -213,7 +213,7 @@ export default function ScanCode() {
 
   return (
     <div className="scan-wrap">
-      <h1 className="scan-title">Scan your sheet</h1>
+      <h1 className="scan-title">Scan Your Sheet</h1>
       <p className="muted">
         Point the camera at a code on your printed exercise sheet. Scan the
         pairing code first, then the plan code.

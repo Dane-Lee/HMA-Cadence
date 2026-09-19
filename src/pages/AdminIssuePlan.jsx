@@ -107,7 +107,7 @@ export default function AdminIssuePlan() {
 
   return (
     <>
-      <h1 className="page-title">Issue a plan</h1>
+      <h1 className="page-title">Issue a Plan</h1>
       <p className="page-subtitle">
         Turn a Tracker plan payload into the two codes on the employee’s sheet. Nothing leaves
         this machine.

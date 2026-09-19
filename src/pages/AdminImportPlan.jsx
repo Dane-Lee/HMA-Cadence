@@ -100,7 +100,7 @@ export default function AdminImportPlan() {
 
   return (
     <>
-      <h1 className="page-title">Import a plan</h1>
+      <h1 className="page-title">Import a Plan</h1>
       <p className="page-subtitle">
         Apply a Tracker plan payload (contract v1) to the local receiver. Test data only.
       </p>
