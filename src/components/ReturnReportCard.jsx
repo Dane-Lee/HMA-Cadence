@@ -73,7 +73,7 @@ export default function ReturnReportCard({ employeeId, refreshKey, autoPrompt, o
     return (
       <div className="card report-card">
         <div className="report-card__title">Progress reports aren’t set up yet</div>
-        <p className="muted report-card__body">
+        <p role="status" className="muted report-card__body">
           Your exercises are still being saved on this phone. Ask Dane to finish setting up
           reporting — nothing you have done will be lost.
         </p>

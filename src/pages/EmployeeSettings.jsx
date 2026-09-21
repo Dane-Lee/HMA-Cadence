@@ -96,17 +96,17 @@ export default function EmployeeSettings() {
       </div>
 
       {!supported && (
-        <p className="muted" style={{ marginTop: 14, fontSize: '.85rem' }}>
+        <p role="status" className="muted" style={{ marginTop: 14, fontSize: '.85rem' }}>
           This device doesn&rsquo;t support notifications, but your preference is still saved.
         </p>
       )}
       {supported && perm === 'denied' && (
-        <p className="muted" style={{ marginTop: 14, fontSize: '.85rem' }}>
+        <p role="alert" className="muted" style={{ marginTop: 14, fontSize: '.85rem' }}>
           Notifications are blocked in your browser settings. Re-enable them there to get reminders.
         </p>
       )}
       {supported && (
-        <p className="muted" style={{ marginTop: 14, fontSize: '.8rem' }}>
+        <p role="status" className="muted" style={{ marginTop: 14, fontSize: '.8rem' }}>
           Reminders arrive while the app is open. (Always-on background reminders are coming soon.)
         </p>
       )}

@@ -54,7 +54,10 @@ export default function StandaloneEmptyNotice() {
   return (
     <div className="install-notice" role="status">
       <strong>This app has no plan yet</strong>
-      <p>
+      {/* The whole notice is a status report -- why this screen is empty and what
+          to do about it -- so the paragraph carries the role its container has.
+          Rule 2 counts an empty-state message as content, not explanation. */}
+      <p role="status">
         If you already scanned your exercise sheet, it opened in Safari and stays
         there. This icon opens a separate copy that cannot see it.
       </p>

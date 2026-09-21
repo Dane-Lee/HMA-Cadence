@@ -67,7 +67,7 @@ export default function AdminPainQueue() {
   return (
     <>
       <h1 className="page-title">Pain Queue</h1>
-      <p className="page-subtitle">
+      <p className="page-subtitle" role="status">
         {reports.length === 0 ? 'All clear — no unresolved reports.' : `${reports.length} unresolved`}
       </p>
 

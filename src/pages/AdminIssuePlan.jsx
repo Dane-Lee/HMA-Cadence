@@ -7,6 +7,7 @@ import { recordIssuedPlanKey } from '../lib/queries.js';
 import { renderSheetCodes } from '../lib/sheet/planSheet.js';
 import PlanSheet from '../components/PlanSheet.jsx';
 import { defaultBaseUrl } from '../lib/clientBaseUrl.js';
+import InfoIcon from '../components/InfoIcon.jsx';
 
 
 /* The payload carries either a single `name` or first/last, depending on which
@@ -107,11 +108,13 @@ export default function AdminIssuePlan() {
 
   return (
     <>
-      <h1 className="page-title">Issue a Plan</h1>
-      <p className="page-subtitle">
-        Turn a Tracker plan payload into the two codes on the employee’s sheet. Nothing leaves
-        this machine.
-      </p>
+      <h1 className="page-title">
+        Issue a Plan
+        <InfoIcon
+          label="what this screen is for"
+          text="Turns a Tracker plan payload into the two codes on the employee's sheet. Nothing leaves this machine."
+        />
+      </h1>
 
       <div className="import-note">
         <strong>Two codes, and the order is the smooth path — not a trap.</strong> The employee
@@ -121,7 +124,10 @@ export default function AdminIssuePlan() {
         wrong-order scan never needs a reprint.
       </div>
 
-      <label className="field-label" htmlFor="issue-base-url">Where the phone lands</label>
+      <label className="field-label" htmlFor="issue-base-url">
+        Where the phone lands
+        <InfoIcon text="This is inside the QR, so a longer address leaves less room for the plan." />
+      </label>
       <input
         id="issue-base-url"
         className="import-input"
@@ -130,9 +136,6 @@ export default function AdminIssuePlan() {
         placeholder="https://cadence.example.com"
         spellCheck={false}
       />
-      <p className="field-hint">
-        This is inside the QR, so a longer address leaves less room for the plan.
-      </p>
 
       <label className="field-label" htmlFor="issue-payload">Plan payload (contract v1)</label>
       <textarea
@@ -164,7 +167,7 @@ export default function AdminIssuePlan() {
         <div className="import-errors">
           <strong>Too big for one code — nothing was issued.</strong>
           <p>{tooLarge.message}</p>
-          <p>
+          <p role="alert">
             Over by <strong>{Math.max(0, (tooLarge.detail.planBytes ?? 0) - MAX_QR_BYTES)} bytes</strong>
             {typeof tooLarge.detail.exercises === 'number' && (
               <> across {tooLarge.detail.exercises} exercise
@@ -206,13 +209,11 @@ export default function AdminIssuePlan() {
             <button className="btn btn-inline" onClick={() => window.print()}>
               Print the sheet
             </button>
+            <InfoIcon
+              label="what happens to the key"
+              text="The key is stored on this machine so a returned progress report can be opened later. It is not recoverable from the printed sheet alone, so re-issuing a lost plan means issuing a new pairing code too."
+            />
           </div>
-
-          <p className="field-hint">
-            The key is stored on this machine so a returned progress report can be opened later.
-            It is not recoverable from the printed sheet alone, so re-issuing a lost plan means
-            issuing a new pairing code too.
-          </p>
         </div>
       )}
 

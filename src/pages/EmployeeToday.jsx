@@ -201,7 +201,7 @@ export default function EmployeeToday() {
   const onboarding = onboardDismissed ? null : (
     <div className="onboarding">
       <div className="onboarding__title">Welcome to HMA, {firstName} 👋</div>
-      <p className="onboarding__body">
+      <p className="onboarding__body" role="status">
         These are the corrective exercises Dane set up for you. Check each one off as
         you go — it only takes a few minutes. Tap the ⚑ on any exercise to share how
         it&rsquo;s going or flag pain.
@@ -217,7 +217,7 @@ export default function EmployeeToday() {
     return (
       <div className="empty-state">
         <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>No Active Program Yet</h2>
-        <p>Once Dane finishes your HMA, your corrective exercises will appear here.</p>
+        <p role="status">Once Dane finishes your HMA, your corrective exercises will appear here.</p>
       </div>
     );
   }
@@ -230,7 +230,7 @@ export default function EmployeeToday() {
         <div className="empty-state">
           <div className="today-greeting" style={{ marginBottom: 12 }}>Hi {firstName} 👋</div>
           <h2 style={{ color: 'var(--text)', marginBottom: 8 }}>Nothing Scheduled Today</h2>
-          <p>Enjoy your rest day — your next exercises will be here when they’re due.</p>
+          <p role="status">Enjoy your rest day — your next exercises will be here when they’re due.</p>
         </div>
       </>
     );

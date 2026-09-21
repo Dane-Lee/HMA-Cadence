@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import jsQR from 'jsqr';
 import StatusCard from '../components/StatusCard.jsx';
 import { ROUTE_FOR, parseQrPayload, setQrPayload } from '../lib/qr/fragment.js';
+import InfoIcon from '../components/InfoIcon.jsx';
 
 /**
  * In-app QR scanner (/scan).
@@ -184,7 +185,7 @@ export default function ScanCode() {
   if (phase === 'unsupported') {
     return (
       <StatusCard title="No camera available">
-        <p>This browser will not give Cadence a camera. Open your sheet's code with the phone's camera app instead.</p>
+        <p role="alert">This browser will not give Cadence a camera. Open your sheet's code with the phone's camera app instead.</p>
         <Link className="btn" to="/login">Back</Link>
       </StatusCard>
     );
@@ -193,7 +194,7 @@ export default function ScanCode() {
   if (phase === 'denied') {
     return (
       <StatusCard title="Camera permission was declined">
-        <p>
+        <p role="alert">
           Cadence needs the camera to read the code on your sheet. Allow camera
           access for this site in your browser settings, then come back.
         </p>
@@ -213,11 +214,14 @@ export default function ScanCode() {
 
   return (
     <div className="scan-wrap">
-      <h1 className="scan-title">Scan Your Sheet</h1>
-      <p className="muted">
-        Point the camera at a code on your printed exercise sheet. Scan the
-        pairing code first, then the plan code.
-      </p>
+      <h1 className="scan-title">
+        Scan Your Sheet
+        <InfoIcon
+          label="which code to scan first"
+          text="Scan the pairing code first, then the plan code. Scanned the other way round the phone holds the plan and opens it the moment the pairing code arrives, so nothing is lost."
+        />
+      </h1>
+      <p className="muted">Point the camera at a code on your printed sheet.</p>
 
       <div className="scan-frame">
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}

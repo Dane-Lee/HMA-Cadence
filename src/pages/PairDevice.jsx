@@ -64,7 +64,7 @@ export default function PairDevice() {
   if (state.phase === 'no_code') {
     return (
       <StatusCard title="Nothing to set up">
-        <p>
+        <p role="alert">
           This link didn’t carry a setup code. Ask your EIS rep to show the setup code again,
           and scan it with your camera.
         </p>
@@ -75,7 +75,7 @@ export default function PairDevice() {
   if (state.phase === 'bad_code') {
     return (
       <StatusCard title="That setup code didn’t work" tone="error">
-        <p>Ask your EIS rep to show it again. If it keeps failing, the code may be damaged.</p>
+        <p role="alert">Ask your EIS rep to show it again. If it keeps failing, the code may be damaged.</p>
       </StatusCard>
     );
   }

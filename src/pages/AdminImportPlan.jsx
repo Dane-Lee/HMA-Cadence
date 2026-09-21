@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ingestPlan } from '../lib/queries.js';
+import InfoIcon from '../components/InfoIcon.jsx';
 
 /**
  * Dev/demo affordance for the Tracker → Cadence plan intake (contract v1).
@@ -100,10 +101,13 @@ export default function AdminImportPlan() {
 
   return (
     <>
-      <h1 className="page-title">Import a Plan</h1>
-      <p className="page-subtitle">
-        Apply a Tracker plan payload (contract v1) to the local receiver. Test data only.
-      </p>
+      <h1 className="page-title">
+        Import a Plan
+        <InfoIcon
+          label="what this screen is for"
+          text="Applies a Tracker plan payload (contract v1) to the local receiver. Test data only."
+        />
+      </h1>
 
       <div className="import-note">
         In production the Tracker sends this to the sanctioned backend — there’s no live

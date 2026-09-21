@@ -6,6 +6,7 @@ import {
   RETURN_OUTCOME,
 } from '../lib/return/openReturns.js';
 import { fetchIssuedPlanKey, bindRecognitionKey } from '../lib/queries.js';
+import InfoIcon from '../components/InfoIcon.jsx';
 
 const OUTCOME_LABEL = {
   [RETURN_OUTCOME.OPENED]: 'Opened',
@@ -87,9 +88,9 @@ export default function AdminReturns() {
       {error && <div className="login-error" style={{ marginTop: 16 }}>{error}</div>}
 
       {report && report.found === 0 && (
-        <div className="import-errors">
+        <div className="import-errors" role="alert">
           <strong>No report found in that.</strong>
-          <p>
+          <p role="alert">
             A report is a block between <code>-----BEGIN HMA REPORT-----</code> and
             {' '}<code>-----END HMA REPORT-----</code>. If the email looks right, it may have been
             truncated — ask them to forward the original rather than paste a copy.
@@ -101,6 +102,10 @@ export default function AdminReturns() {
         <div className="import-result">
           <div className="import-result__title">
             {report.opened.length} of {report.found} report{report.found === 1 ? '' : 's'} opened
+            <InfoIcon
+              label="what opening a report does"
+              text="Opening a report links this employee's device to their record, so later reports are recognised even after a re-assessment issues them a new plan."
+            />
           </div>
 
           <ul className="returns-list">
@@ -145,10 +150,6 @@ export default function AdminReturns() {
             })}
           </ul>
 
-          <p className="field-hint">
-            Opening a report links this employee’s device to their record, so later reports are
-            recognised even after a re-assessment issues them a new plan.
-          </p>
         </div>
       )}
     </>

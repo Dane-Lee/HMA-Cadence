@@ -72,12 +72,12 @@ export default function ScanPlan() {
     case 'not_paired':
       return (
         <StatusCard title="One step first">
-          <p>
+          <p role="status">
             Your plan is saved on this phone, but it can’t be opened until your EIS rep sets up
             this device. See them whenever it suits you — it takes a few seconds, and your plan
             will open automatically.
           </p>
-          <p className="scan-note">
+          <p className="scan-note" role="status">
             In the meantime, use the printed sheet. Everything you need is on it.
           </p>
         </StatusCard>
@@ -86,14 +86,14 @@ export default function ScanPlan() {
     case 'unsupported_version':
       return (
         <StatusCard title="Update needed" tone="error">
-          <p>This plan needs a newer version of Cadence than this device has.</p>
+          <p role="alert">This plan needs a newer version of Cadence than this device has.</p>
         </StatusCard>
       );
 
     case 'decrypt_failed':
       return (
         <StatusCard title="This plan isn’t for this phone" tone="error">
-          <p>Check that you scanned your own sheet. If it is yours, see your EIS rep.</p>
+          <p role="alert">Check that you scanned your own sheet. If it is yours, see your EIS rep.</p>
         </StatusCard>
       );
 

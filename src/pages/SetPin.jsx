@@ -58,10 +58,9 @@ export default function SetPin() {
         </div>
 
         <h1>Set Your PIN</h1>
-        <p className="muted">
+        <p className="muted" role="status">
           {firstName ? `Welcome, ${firstName}. ` : ''}
-          You&rsquo;re using a temporary PIN. Choose a new {PIN_MIN}–{PIN_MAX} digit PIN
-          to finish setting up your account.
+          Choose a new {PIN_MIN}–{PIN_MAX} digit PIN.
         </p>
 
         <div className="field">
@@ -114,10 +113,6 @@ export default function SetPin() {
           {saving ? 'Saving…' : 'Save PIN'}
         </button>
 
-        <div className="spacer-sm" />
-        <p className="muted center" style={{ fontSize: '.8rem' }}>
-          Keep this PIN private. You&rsquo;ll use it to sign in from now on.
-        </p>
       </form>
     </div>
   );
