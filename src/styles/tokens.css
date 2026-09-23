@@ -44,6 +44,44 @@
   --grad-light: linear-gradient(180deg, rgb(var(--accent-deep)) 0%, rgb(var(--accent)) 100%);
   --grad-dark:  linear-gradient(180deg, rgb(var(--brand)) 0%, rgb(var(--accent)) 100%);
 
+  /* THE TWO ABOVE WERE DECLARED IN FIVE FILES AND USED IN NONE for six weeks.
+   * Every app carried them, no app consumed one, and both themes ran on pure
+   * black and pure white -- which the owner, on 2026-09-23, called "staring at
+   * a fucking old school chalkboard".
+   *
+   * The reason nobody reached for them is mechanical, not aesthetic: picking
+   * between `--grad-dark` and `--grad-light` is a THEME decision, so every use
+   * site needed two rules, one of them behind a `:root[data-theme="light"]`
+   * selector. Two rules for a background is enough friction to lose to a flat
+   * colour every time.
+   *
+   * `--brand-gradient` resolves per theme, so a use site is one line:
+   *
+   *     header { background: var(--brand-gradient); }
+   *
+   * The guide (§2.4) says gradients exist "to create visual interest and move
+   * the viewer's eye", and that a key use is "providing additional contrast for
+   * white typography" -- so it is for headers, the current step, and primary
+   * actions, and §2.4 also says to use them with discipline. Not everywhere.
+   *
+   * CONTRAST, measured rather than assumed: white on the gradient's light end
+   * (ATI Bright Red, the worst case in both themes) is 4.84:1 -- over 4.5 for
+   * body text. Anything at 80% white or below on it is NOT; the tablet form's
+   * step labels measured 3.17 before they went to full white.
+   * `tools/palette-audit.mjs` reads gradients as of 2026-09-23 and will say so. */
+  --brand-gradient: var(--grad-dark);
+
+  /* A wash, not a ground. Tones the page off pure black / pure white, which the
+   * guide asks for in §2.5 ("the 80% gray can help soften the darker color
+   * blocks", "the 20% grayscale gives tone to lighter backgrounds"). Alpha, so
+   * one value serves both themes:
+   *
+   *     body { background: var(--page-wash), rgb(var(--depth)); }
+   *
+   * It composites over whatever is under it, so it does not change what any
+   * contrast check resolves a ground to by more than its own 13%. */
+  --page-wash: radial-gradient(1100px 520px at 50% -8%, rgb(var(--accent) / .13), transparent 70%);
+
   /* Ground — dark. ATI Bold Black and the 80% grey, which is exactly what the
    * guide's dark layouts use: "Body copy - Set as white or 20% black on black". */
   --depth:     0   0   0;
@@ -124,5 +162,8 @@
   --rim:       rgba(0,0,0,0.22);
   --shadow-card: 0 1px 2px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.10);
   --ok:       51  51  51;
+  /* Dark red to bright red on a light page; black to bright red would put the
+   * page's darkest value at the top of every header. */
+  --brand-gradient: var(--grad-light);
 }
 /* ==== SHARED TOKENS — COPY END ==== */

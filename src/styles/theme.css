@@ -102,7 +102,11 @@
   /* Chrome. The Manual's header is a card on the brand navy; on a phone it stays
      a full-bleed sticky bar (see .app-header in app.css) and only the colour is
      shared. */
-  --header-bg: rgb(var(--brand));
+  /* THE BRAND GRADIENT, 2026-09-23. Guide 2.4: gradients create visual
+     interest and give white type extra contrast -- which is this bar's whole
+     job. `--brand-gradient` is itself per-theme, so the same line serves both
+     blocks and Cadence's own vocabulary keeps its single mapping point. */
+  --header-bg: var(--brand-gradient);
   --header-text: #fff;
 
   --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
@@ -135,7 +139,11 @@
   --danger: rgb(var(--bad));
   --danger-bg: rgb(var(--bad-tint));
 
-  --header-bg: rgb(var(--brand));
+  /* THE BRAND GRADIENT, 2026-09-23. Guide 2.4: gradients create visual
+     interest and give white type extra contrast -- which is this bar's whole
+     job. `--brand-gradient` is itself per-theme, so the same line serves both
+     blocks and Cadence's own vocabulary keeps its single mapping point. */
+  --header-bg: var(--brand-gradient);
   --header-text: #fff;
 
   --shadow-sm: 0 1px 4px rgba(14,29,39,.08);
@@ -198,7 +206,10 @@ button, .btn, .label, input, select, textarea {
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  /* Toned off the flat ground -- brand guide 2.5. Alpha, so one value serves
+     both themes. The printed companion sheet is unaffected: print resets the
+     body background, and `test/printSheetCss.test.js` pins those 22 rules. */
+  background: var(--page-wash), var(--bg);
   color: var(--text);
   line-height: 1.5;
   min-height: 100vh;
