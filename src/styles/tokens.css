@@ -82,6 +82,23 @@
    * contrast check resolves a ground to by more than its own 13%. */
   --page-wash: radial-gradient(1100px 520px at 50% -8%, rgb(var(--accent) / .13), transparent 70%);
 
+  /* The same wash at LOGIN strength. A front door is one small card on a lot of
+   * empty ground, and `--page-wash` -- tuned for a page that is mostly content
+   * -- disappears behind it. Owner picked this level for the Manual's login on
+   * 2026-09-24 after seeing all three side by side.
+   *
+   * SHARED RATHER THAN LOCAL, because there are two login screens and Cadence's
+   * already hand-rolls its own radial at yet another strength. A third recipe in
+   * a third file is precisely the drift `--page-wash` was added to stop, so the
+   * second strength is a token too.
+   *
+   * Cadence has NOT been switched to it -- its login is deliberately subtler and
+   * changing that was not asked for. Noted in HANDOFF as its call.
+   *
+   * Still one colour: `--accent` at a different alpha over a different radius.
+   * Nothing new is declared. */
+  --page-wash-strong: radial-gradient(1400px 900px at 50% -20%, rgb(var(--accent) / .38), transparent 68%);
+
   /* Ground — dark. ATI Bold Black and the 80% grey, which is exactly what the
    * guide's dark layouts use: "Body copy - Set as white or 20% black on black". */
   --depth:     0   0   0;
