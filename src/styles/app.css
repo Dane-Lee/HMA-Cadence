@@ -63,13 +63,22 @@
    reading as a single mark. */
 .app-header__brand-mark {
   /* The real ATI logo, not a letter in a coloured square. Served from
-     /ati-logo.png, which is a byte-identical copy of design/ati-logo.css's
-     neighbour in the suite repo -- Cadence deploys independently so it cannot
-     reach into that tree, and `tools/embed-logo.py` keeps the copy in step.
+     /ati-logo-positive.png, a byte-identical copy of the suite's canonical
+     file -- Cadence deploys independently so it cannot reach into that tree,
+     and `tools/embed-logo.py` keeps the copy in step.
 
-     White plate on purpose: the artwork is black type on transparency, so in
-     dark theme it would otherwise be black on near-black. The image itself is
-     untouched -- only what sits behind it is ours. */
+     White plate on purpose: the POSITIVE lockup is black type on transparency,
+     so in dark theme it would otherwise be black on near-black. The image
+     itself is untouched -- only what sits behind it is ours.
+
+     THIS COMMENT USED TO NAME /ati-logo.png, and was right when it was written.
+     On 2026-09-17 the canonical mark became the WHITE REVERSE lockup, and every
+     consumer that had it on a white plate went invisible without a word: this
+     header, the other shell, HMA-Manual's login card and its upload page. Three
+     of the four were found on 2026-09-24, by looking at the screens.
+
+     The rule, so it is not learned a fifth time: WHITE PLATE TAKES THE POSITIVE
+     LOCKUP (Brand Guide 1.3). A dark ground takes the reverse one. */
   border-radius: 8px;
   padding: 5px 9px;
   background: #fff;
