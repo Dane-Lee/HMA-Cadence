@@ -137,9 +137,19 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background:
-    radial-gradient(1200px 600px at 50% -10%, rgb(var(--accent) / .12), transparent 60%),
-    var(--bg);
+  /* THE SHARED LOGIN WASH. Owner, 2026-09-24, after picking the strength on the
+     Manual's login: "Whatever we decide for the HMA Manual gradient design, I
+     want to apply to the Cadence login screen as well."
+
+     This was a hand-rolled radial at its own strength -- written before the
+     token existed, and the third recipe for one idea across the estate. It is
+     the token now, so the two login screens cannot drift apart again and a
+     change to either is a change to `design/tokens.css`.
+
+     The base stays `--bg`, Cadence's own theme-aware ground, rather than the
+     Manual's flat `--brand`: this app's login follows the theme and the
+     Manual's is deliberately dark in both. */
+  background: var(--page-wash-strong), var(--bg);
 }
 
 /* A BIGGER BOX SO THE NAME CAN BE BIG IN IT. Owner, 2026-09-24: "we need to

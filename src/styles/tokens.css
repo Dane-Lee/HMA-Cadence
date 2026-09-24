@@ -84,20 +84,37 @@
 
   /* The same wash at LOGIN strength. A front door is one small card on a lot of
    * empty ground, and `--page-wash` -- tuned for a page that is mostly content
-   * -- disappears behind it. Owner picked this level for the Manual's login on
-   * 2026-09-24 after seeing all three side by side.
+   * -- disappears behind it.
    *
-   * SHARED RATHER THAN LOCAL, because there are two login screens and Cadence's
-   * already hand-rolls its own radial at yet another strength. A third recipe in
-   * a third file is precisely the drift `--page-wash` was added to stop, so the
-   * second strength is a token too.
+   * Owner picked this level on 2026-09-24, over TWO rounds. The first round's
+   * winner was still too quiet -- "I don't feel that there is enough gradient
+   * for what I'm looking for. We need a meaningfully larger amount of color
+   * incorporated" -- so the alpha went .38 -> .62 and the radius grew with it.
    *
-   * Cadence has NOT been switched to it -- its login is deliberately subtler and
-   * changing that was not asked for. Noted in HANDOFF as its call.
+   * A RADIAL, though the linear brand gradient was also on the table and was
+   * the bolder render. Brand guide 2.4 forbids a gradient on an arbitrary
+   * angle, and that option ran at 160 degrees. The radial carries as much
+   * colour without touching the rule, and leaves the card in a darker pocket
+   * where its own edges still read.
+   *
+   * SHARED RATHER THAN LOCAL, because BOTH login screens use it: "Whatever we
+   * decide for the HMA Manual gradient design, I want to apply to the Cadence
+   * login screen as well." Cadence's hand-rolled radial is gone. One token, so
+   * the two cannot drift and a change to either is a change to this file.
+   *
+   * SIZED IN VIEWPORT UNITS, not pixels, and that is not a detail. The value
+   * the owner approved was 1600x1100px, chosen on a 1280px-wide desktop -- the
+   * Manual's login, which runs on his work computer. Cadence's login is the
+   * same token on a 430px PHONE, where a 1600px bloom is four times the screen
+   * and the card covers what little of it lands: the two screens would carry
+   * visibly different amounts of colour while claiming to share a design.
+   *
+   * 125vw x 128vh reproduces the approved look on that desktop almost exactly
+   * and scales to the phone instead of overflowing it.
    *
    * Still one colour: `--accent` at a different alpha over a different radius.
    * Nothing new is declared. */
-  --page-wash-strong: radial-gradient(1400px 900px at 50% -20%, rgb(var(--accent) / .38), transparent 68%);
+  --page-wash-strong: radial-gradient(125vw 128vh at 50% -12%, rgb(var(--accent) / .62), transparent 74%);
 
   /* Ground — dark. ATI Bold Black and the 80% grey, which is exactly what the
    * guide's dark layouts use: "Body copy - Set as white or 20% black on black". */
