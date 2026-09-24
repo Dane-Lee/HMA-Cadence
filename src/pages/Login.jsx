@@ -5,6 +5,7 @@ import StandaloneEmptyNotice from '../components/StandaloneEmptyNotice.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import { useVeil } from '../components/PageTransition.jsx';
 import { useReveal } from '../components/RevealButton.jsx';
+import { clientLogo, clientLogoAlt, clientName } from '../lib/branding.js';
 
 export default function Login() {
   const { signIn, loading } = useAuth();
@@ -38,33 +39,58 @@ export default function Login() {
     }
   }
 
+  // Build settings, so an empty value removes the piece cleanly rather
+  // than rendering a broken image or a stray separator.
+  const site = clientName();
+  const logo = clientLogo();
+  const logoAlt = clientLogoAlt();
+
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={onSubmit}>
         {/* CO-BRANDED, WITH THE REAL MARKS. Owner, 2026-09-17: "You're not using
             the right H" -- this was a typed letter H in a red square, the same
-            reproduction he ruled out for the ATI logo. It is the actual
-            Hendrickson mark now, and the ATI Worksite Solutions lockup beside
-            it, because this is the one screen where the two companies meet:
-            Hendrickson's people, ATI's programme. On the white plate the
-            Hendrickson artwork needs (black line art), ATI's positive lockup
-            sits beside it the way the app header already pairs them. */}
+            reproduction he ruled out for the ATI logo. It is the actual client
+            mark now, and the ATI Worksite Solutions lockup beside it, because
+            this is the one screen where the two companies meet: the client's
+            people, ATI's programme.
+
+            SPLIT TO THE CORNERS, 2026-09-24, ATI on the left: "Based on the
+            other programs generally having their ATI Worksite Solutions logo in
+            the left-aligned position, I want to keep the ATI logo in the
+            left-aligned top corner and move the Hendrickson 'H' to the
+            right-aligned top corner."
+
+            EACH KEEPS ITS OWN WHITE PLATE. They shared one because both are
+            black line art -- the client mark, and ATI's 2/C POSITIVE lockup,
+            which is the guide's choice for a light ground (1.3). Splitting them
+            onto a dark card without plates would have put black artwork on a
+            near-black ground. The divider goes, because opposite corners
+            already say they are two marks. */}
         <div className="login-card__brand">
-          <div className="login-card__marks">
-            <img src="/hendrickson-logo.jpg" alt="Hendrickson" className="login-card__mark-h" />
-            <span className="login-card__divider" aria-hidden="true" />
+          <span className="login-card__plate">
             <img src="/ati-logo-positive.png" alt="ATI Worksite Solutions" className="login-card__mark-ati" />
-          </div>
-          <ThemeToggle className="login-card__theme" />
+          </span>
+          {logo ? (
+            <span className="login-card__plate">
+              <img src={logo} alt={logoAlt} className="login-card__mark-h" />
+            </span>
+          ) : null}
         </div>
         <div className="login-card__title">
           <div>HMA Cadence</div>
-          <div className="muted login-card__site">Hendrickson · Navarre</div>
+          {site ? <div className="muted login-card__site">{site}</div> : null}
         </div>
 
         <StandaloneEmptyNotice />
 
-        <h1>Sign In</h1>
+        {/* The toggle sits on the Sign In line and right-aligned, to
+            counterbalance the title (owner, 2026-09-24). It vacated the brand
+            row so the two marks could take the corners. */}
+        <div className="login-card__signin">
+          <h1>Sign In</h1>
+          <ThemeToggle className="login-card__theme" />
+        </div>
 
         <div className="field">
           <label className="label" htmlFor="empNum">Work ID</label>

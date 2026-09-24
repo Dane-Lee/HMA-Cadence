@@ -176,10 +176,13 @@
    part that changes with the theme: barely-there on dark, where the contrast
    against the card already does the work, and a definite line on light, where
    it is the only thing doing it. */
-.login-card__marks {
+/* ONE PLATE PER MARK, 2026-09-24. They shared a plate while they sat together;
+   split to opposite corners they each need their own, for the same reason the
+   plate existed at all -- both are black line art and a dark card is not a
+   ground they can sit on. */
+.login-card__plate {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid rgb(0 0 0 / .18);
@@ -187,18 +190,31 @@
 }
 .login-card__mark-h { height: 38px; width: auto; display: block; }
 .login-card__mark-ati { height: 30px; width: auto; display: block; }
-.login-card__divider { width: 1px; align-self: stretch; background: rgba(0,0,0,.18); }
 /* The light theme is where the plate needs its own edge -- see above. Written
    for both ways the theme can be light: the explicit choice, and the system
    default with nothing stamped on the root. */
-:root[data-theme="light"] .login-card__marks {
+:root[data-theme="light"] .login-card__plate {
   border-color: rgb(var(--ink) / .28);
   box-shadow: 0 1px 3px rgb(0 0 0 / .10);
 }
-.login-card__brand { justify-content: space-between; }
+/* ATI left, client right. `space-between` does that with two children and
+   still left-aligns the ATI mark on its own if the client mark is unset. */
+.login-card__brand { justify-content: space-between; align-items: flex-start; }
 .login-card__theme { flex: none; }
-.login-card__title { font-weight: 700; margin: 14px 0 6px; font-size: 1.05rem; }
+/* Centred, owner 2026-09-24. The site line rides with it as one block. */
+.login-card__title { font-weight: 700; margin: 18px 0 6px; font-size: 1.05rem; text-align: center; }
 .login-card__site { font-size: .8rem; font-weight: 400; }
+/* Sign In keeps the toggle company, pushed to the right edge to counterbalance
+   the heading (owner, 2026-09-24). The heading's own margin is cleared so the
+   row controls the spacing. */
+.login-card__signin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 10px;
+}
+.login-card__signin h1 { margin: 0; }
 .login-card__help { font-size: .8rem; }
 
 /* SHOW / HIDE on a PIN field (owner, 2026-09-18). The button sits inside the

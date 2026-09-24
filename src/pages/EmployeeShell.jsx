@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
 import { useDailyReminder } from '../lib/reminders.js';
 import ThemeToggle from '../components/ThemeToggle.jsx';
+import { clientLogo, clientLogoAlt } from '../lib/branding.js';
 
 export default function EmployeeShell({ children }) {
   const { employee, signOut } = useAuth();
@@ -13,13 +14,20 @@ export default function EmployeeShell({ children }) {
     firstName: employee?.name?.split(' ')[0] ?? '',
   });
 
+  const logo = clientLogo();
+  const logoAlt = clientLogoAlt();
+
   return (
     <>
       <header className="app-header">
         <div className="app-header__brand">
           <div className="app-header__brand-mark">
-            <img src="/hendrickson-logo.jpg" alt="Hendrickson" />
-            <span className="app-header__brand-divider" aria-hidden="true" />
+            {logo ? (
+              <>
+                <img src={logo} alt={logoAlt} />
+                <span className="app-header__brand-divider" aria-hidden="true" />
+              </>
+            ) : null}
             <img src="/ati-logo.png" alt="ATI Worksite Solutions" />
           </div>
           <div>HMA</div>
