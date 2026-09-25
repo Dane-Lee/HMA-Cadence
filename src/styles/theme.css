@@ -210,6 +210,9 @@ body {
      both themes. The printed companion sheet is unaffected: print resets the
      body background, and `test/printSheetCss.test.js` pins those 22 rules. */
   background: var(--page-wash), var(--bg);
+  /* design/tokens.css, at --page-wash: the tile is the PAGE box, so a short
+     page repeats it and shows a hard band where the next tile starts. */
+  background-repeat: no-repeat;
   color: var(--text);
   line-height: 1.5;
   min-height: 100vh;

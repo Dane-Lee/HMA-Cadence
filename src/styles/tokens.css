@@ -80,7 +80,26 @@
    *
    * It composites over whatever is under it, so it does not change what any
    * contrast check resolves a ground to by more than its own 13%. */
-  --page-wash: radial-gradient(1100px 520px at 50% -8%, rgb(var(--accent) / .13), transparent 70%);
+  /* SIZED IN VIEWPORT UNITS, and that is a bug fix rather than a tidy-up.
+   * A background defaults to `repeat`, and this one is applied to `body` --
+   * whose box is only as tall as its content. On any page shorter than the
+   * window, the 520px-tall bloom TILED, and the second tile's hot top edge
+   * landed as a hard horizontal band across the lower half of the screen. It
+   * was visible in the Overlay the moment the light alpha went up on
+   * 2026-09-25, and it had been there, faintly, in both themes all along.
+   *
+   * TWO CHANGES FIX IT AND BOTH ARE NEEDED. Viewport units, here, so the bloom
+   * scales with the window rather than being a fixed pixel shape -- the same
+   * reasoning already recorded for --page-wash-strong. And `background-repeat:
+   * no-repeat` AT EVERY USE SITE, which cannot live in this token because it is
+   * a separate property: a gradient's tile is sized `auto`, meaning the size of
+   * the PAGE box, so viewport units describe the gradient's shape but not the
+   * tile it is drawn into. Measured on the Overlay at 1512x700 with a 565px
+   * page: the second tile began at y=565, exactly where the band was.
+   *
+   * IF YOU PUT `var(--page-wash)` ON A NEW ELEMENT, PUT `background-repeat:
+   * no-repeat` WITH IT. */
+  --page-wash: radial-gradient(120vw 120vh at 50% -10%, rgb(var(--accent) / .13), transparent 70%);
 
   /* The same wash at LOGIN strength. A front door is one small card on a lot of
    * empty ground, and `--page-wash` -- tuned for a page that is mostly content
@@ -199,5 +218,22 @@
   /* Dark red to bright red on a light page; black to bright red would put the
    * page's darkest value at the top of every header. */
   --brand-gradient: var(--grad-light);
+
+  /* THE WASH IS STRONGER ON LIGHT, and it has to be. One alpha served both
+   * themes until 2026-09-25: 13% accent reads clearly over pure black and
+   * almost not at all over 20% Black, because the light page is already most
+   * of the way to the wash's own value and there is nothing left for it to
+   * lift.
+   *
+   * The owner, on the Manual in light mode: "a very startlingly boring shade
+   * of gray ... the boring gray in the background with the same gray colored
+   * buttons, it just, makes everything look like a stone." He raised the same
+   * thing about the Tracker and the Overlay in the same message -- which is
+   * why this is one value here rather than three fixes in three apps. All five
+   * apps put `var(--page-wash)` on `body`.
+   *
+   * Still one colour: --accent at a different alpha over a larger radius.
+   * Nothing new is declared and the dark theme does not move. */
+  --page-wash: radial-gradient(125vw 125vh at 50% -12%, rgb(var(--accent) / .26), transparent 72%);
 }
 /* ==== SHARED TOKENS — COPY END ==== */
