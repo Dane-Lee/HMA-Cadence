@@ -285,6 +285,10 @@
 }
 .reveal-btn:hover { color: var(--text); background: var(--bg-hover); }
 .reveal-btn:focus-visible { outline: 2px solid var(--border); outline-offset: 2px; }
+/* One eye per field. Edge draws its own show-password button inside a password
+   field while you type, beside this one -- two eyes doing one job. Found in the
+   suite's sign-in on 2026-10-06; Cadence's PIN fields are the same shape. */
+.secret > .input::-ms-reveal { display: none; }
 
 /* The info icon, Cadence's copy. DESIGN-RULES rule 2. Tap-reachable via focus. */
 .info {
