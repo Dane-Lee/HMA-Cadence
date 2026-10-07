@@ -42,7 +42,7 @@ export default function AdminEmployees() {
         <h1 className="page-title">Employees</h1>
         <p className="page-subtitle">Nobody enrolled yet.</p>
         <div className="empty-state">
-          Add an employee to begin. (Onboarding flow lives in the admin tools — coming soon.)
+          Add an employee from Import.
         </div>
       </>
     );

@@ -16,20 +16,45 @@ import { db } from './data/index.js';
 
 const STORAGE_KEY = 'hma-cadence:session';
 
+/**
+ * WHO IS SIGNED IN TO THE ADMIN BUILD: whoever the suite let in.
+ *
+ * Since 2026-10-07 the suite serves the admin build at /cadence, behind its own
+ * sign-in -- the page cannot be reached without it. So the admin build has no
+ * login of its own any more, and this is the admin it runs as. The demo seed's
+ * `ADMIN001` was the only reason that build carried the seed at all (decision
+ * A2's open piece), and it is gone with it. `role` is all the admin routes check.
+ */
+export const SUITE_ADMIN = {
+  id: 'suite-admin',
+  employee_number: '',
+  name: 'Specialist',
+  role: 'admin',
+  active: true,
+  must_change_pin: false,
+};
+
+/** The session a fresh page starts with. A parameter, so a test can ask for
+ *  either build's answer; the app passes nothing and gets its own. */
+export function initialSession(isAdminBuild = __ADMIN_BUILD__) {
+  if (isAdminBuild) return { employee: SUITE_ADMIN, signedInAt: null };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [session, setSession] = useState(() => initialSession());
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // The suite owns the admin's session; there is nothing of ours to keep.
+    if (__ADMIN_BUILD__) return;
     if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     else localStorage.removeItem(STORAGE_KEY);
   }, [session]);

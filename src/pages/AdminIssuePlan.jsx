@@ -112,18 +112,13 @@ export default function AdminIssuePlan() {
         Issue a Plan
         <InfoIcon
           label="what this screen is for"
-          text="Turns a Tracker plan payload into the two codes on the employee's sheet. Nothing leaves this machine."
+          text="Turns a Tracker plan payload into the two codes on the employee's sheet. Nothing leaves this machine. The employee scans the pairing code first, which carries the key, then the plan code. Scanned the other way round, the phone holds the plan until the pairing code arrives, so a wrong-order scan never needs a reprint."
         />
       </h1>
 
-      <div className="import-note">
-        <strong>Two codes, and the order is the smooth path — not a trap.</strong> The employee
-        scans the <strong>pairing code first</strong> — it carries the key — then the{' '}
-        <strong>plan code</strong>, which is encrypted with it. Scanned the other way round the
-        phone <em>holds</em> the plan and opens it the moment the pairing code arrives, so a
-        wrong-order scan never needs a reprint.
-      </div>
-
+      {/* The scan-order note lives in the title's info icon now (DESIGN-RULES rule 2):
+          this screen became part of the suite on 2026-10-07, and it was the one
+          paragraph of explanation left on it. */}
       <label className="field-label" htmlFor="issue-base-url">
         Where the phone lands
         <InfoIcon text="This is inside the QR, so a longer address leaves less room for the plan." />

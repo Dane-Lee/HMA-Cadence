@@ -59,7 +59,9 @@ export default function App() {
     <PageTransition>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
-      <Route path="/login" element={<Login />} />
+      {/* The admin build has no login of its own: the suite's sign-in is in front
+          of it (2026-10-07). An old bookmark to /login lands on the roster. */}
+      <Route path="/login" element={__ADMIN_BUILD__ ? <Navigate to="/admin" replace /> : <Login />} />
 
       {/* QR entry points. Public: an employee scanning their first sheet has no
           account yet — the receiver creates it when the plan is applied. */}

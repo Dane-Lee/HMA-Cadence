@@ -28,6 +28,8 @@
  * runtime and nothing to get wrong on a phone that cached the old bundle.
  */
 
+import { asset } from './asset.js';
+
 const DEFAULT_CLIENT_NAME = 'Hendrickson · Navarre';
 const DEFAULT_CLIENT_LOGO = '/hendrickson-logo.jpg';
 
@@ -43,8 +45,10 @@ export function clientName(env = import.meta.env) {
   return setting(env?.VITE_CLIENT_NAME, DEFAULT_CLIENT_NAME);
 }
 
+/** Under the build's base: "/cadence/hendrickson-logo.jpg" in the admin build
+ *  the suite serves, unchanged on the phone. A full URL or "" passes through. */
 export function clientLogo(env = import.meta.env) {
-  return setting(env?.VITE_CLIENT_LOGO, DEFAULT_CLIENT_LOGO);
+  return asset(setting(env?.VITE_CLIENT_LOGO, DEFAULT_CLIENT_LOGO));
 }
 
 /** The alt text for the client mark. Derived from the name rather than being a

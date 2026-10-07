@@ -47,12 +47,23 @@ export default defineConfig(({ command }) => {
   // "admin: empty roster" needs a bootstrap admin account first, which touches
   // auth. The admin build is never deployed, so its fictional roster is untidy
   // rather than exposed.
-  const stripSeed = command === 'build' && !IS_ADMIN;
+  //
+  // CLOSED 2026-10-07: the admin build lost its seed. The suite now serves it at
+  // /cadence behind the suite's own sign-in, so `ADMIN001` is not needed to get
+  // in -- and an admin build carrying five fictional people would put them in
+  // the suite's real store on its first visit. Stripped from EVERY admin run,
+  // `npm run dev` included, because dev proxies to that same real store. The
+  // seed now lives only where nothing is real: tests, and the client in dev.
+  const stripSeed = IS_ADMIN || command === 'build';
   const seedModule = stripSeed
     ? './src/lib/data/localSeed.none.js'
     : './src/lib/data/localSeed.js';
 
   return {
+    // The suite serves the admin build at /cadence (owner, 2026-10-07). Every
+    // asset path, the router's basename and `asset()` follow from this one line.
+    // The phone's build stays at the root of its own host.
+    base: IS_ADMIN ? '/cadence/' : '/',
     define: {
       // Read by App.jsx to decide where an admin-role account belongs. In the
       // client build `/admin` is not a route, so it must not be a redirect target.
@@ -72,7 +83,10 @@ export default defineConfig(({ command }) => {
     },
     plugins: [
       react(),
-      VitePWA({
+      // The PHONE's install machinery only. The admin build is a desk page inside
+      // the suite: a service worker there would serve yesterday's admin app from
+      // cache, on the suite's own origin.
+      ...(IS_ADMIN ? [] : [VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg'],
         manifest: {
@@ -118,10 +132,14 @@ export default defineConfig(({ command }) => {
             },
           ],
         },
-      }),
+      })]),
     ],
     server: {
       port: 5174,
+      // `npm run dev` is the admin build, and its data lives in the suite's store
+      // now: send /api to the suite on 8003, as the Manual's dev server does. Sign
+      // in on 8003 first -- the session cookie is not port-specific.
+      proxy: IS_ADMIN ? { '/api': { target: 'http://localhost:8003', changeOrigin: true } } : undefined,
       host: true,
       // Vite denies unknown Host headers by default; bare IPs are allowed but DNS
       // names are not. Device testing over Tailscale arrives as

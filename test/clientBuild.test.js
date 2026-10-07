@@ -49,6 +49,9 @@ const ADMIN_MARKERS = [
   'too_large',
   'unknown_key',
   'not_a_return',
+  // The suite's store. Since 2026-10-07 the admin build keeps its data there;
+  // the employee's app must never so much as know the address.
+  '/api/local-store/',
 ];
 
 function bundleText(dir) {
@@ -255,19 +258,30 @@ describe('the client build excludes the demo seed', () => {
    * because it is a field the adapter reads. Neither discriminates, and a
    * non-discriminating marker is a test that passes whatever happens. */
 
-  it('the admin bundle still contains the seed, or this test proves nothing', () => {
-    /* The control, and here it is also the intended behaviour rather than only
-     * a discriminator: the seed carries the ONLY admin account, so an admin
-     * build without it locks the practitioner out of their own app. If this
-     * ever fails, check that before assuming the test is wrong. */
-    const admin = bundleText('dist-admin');
-    if (!admin) return; // no admin build on this machine; the client check still runs
-
-    const missing = SEED_MARKERS.filter((marker) => !admin.includes(marker));
+  it('the markers are the seed\'s own data, or the checks below prove nothing', () => {
+    /* The control. Until 2026-10-07 it was the ADMIN bundle, which carried the
+     * seed because the seed held the only admin account. The admin build now
+     * sits inside the suite behind the suite's own sign-in, so it lost the seed
+     * too -- and the markers are checked against the seed's source instead,
+     * which is where they have to be for "absent from a bundle" to mean
+     * anything. */
+    const seed = readFileSync(`${root}src/lib/data/localSeed.js`, 'utf8');
+    const missing = SEED_MARKERS.filter((marker) => !seed.includes(marker));
     expect(
       missing,
-      'these markers no longer discriminate, so the client check below is vacuous',
+      'these markers are not in the seed, so the bundle checks below are vacuous',
     ).toEqual([]);
+  });
+
+  it('the admin bundle contains no fictional people either', () => {
+    /* Since 2026-10-07. The admin build writes to the suite's REAL store, and on
+     * its first visit it writes whatever it started with: five fictional people
+     * with health records, mixed in with the specialist's actual roster. */
+    const admin = bundleText('dist-admin');
+    if (!admin) return; // no admin build on this machine
+
+    const found = SEED_MARKERS.filter((marker) => admin.includes(marker));
+    expect(found, 'the demo seed is in the admin build, which writes to the suite\'s real store').toEqual([]);
   });
 
   it('the client bundle contains no fictional people', () => {

@@ -30,7 +30,11 @@
 /* The Manual's header, for the desk: a card on the brand navy with a rim and
    the shared card radius, sitting inside the same measure as the content. */
 .app-header--admin {
-  max-width: 980px;
+  /* 1080, not 980, since Home joined the nav (2026-10-07): the logo plate, Home
+     at its 15% and five tabs on one line measure 1,029px, and at 980 the plate
+     was squeezed into "HMA Admin". The page below widens with it -- see
+     `.app-header--admin ~ .app-main`. The phone's layout is not this header. */
+  max-width: 1080px;
   width: calc(100% - 40px);
   margin: 20px auto 0;
   border-radius: var(--r-card);
@@ -112,6 +116,9 @@
 
 .app-header__nav a {
   color: var(--header-text);
+  /* One line per tab. With Home in the row (2026-10-07), "Pain Queue" broke
+     onto two and the tab looked like two buttons. */
+  white-space: nowrap;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: .95rem;
@@ -119,6 +126,23 @@
 }
 .app-header__nav a:hover { background: rgba(255,255,255,.08); }
 .app-header__nav a.active { background: rgb(var(--accent)); }
+
+/* HOME, back to the suite. First in the nav row, then a hairline, then the
+   tabs, and 15% larger than them (owner, 2026-09-25) -- the same control the
+   Manual, the Tracker and the Overlay carry. White on the header in both
+   themes, because the header is the brand gradient in both. */
+.app-header__nav a.app-header__home {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 46px; padding: 0 18px;
+  font-size: 1.09rem; font-weight: 700;
+  border: 1px solid rgba(255,255,255,.35); border-radius: var(--r-pill);
+  background: rgba(255,255,255,.12);
+}
+.app-header__nav a.app-header__home:hover { background: rgba(255,255,255,.22); }
+.app-header__home-rule {
+  width: 1px; height: 26px; margin: 0 6px; flex: none;
+  background: rgba(255,255,255,.35);
+}
 
 .app-header__signout {
   color: var(--header-text);
@@ -137,6 +161,22 @@
   margin: 0 auto;
   padding: 24px 20px 96px;
 }
+
+/* THE ADMIN PAGE, inside the suite since 2026-10-07. As wide as its header, so
+   the two keep the inset they always had.
+
+   And no green. The dark theme's --success is #56c15b, which the ATI palette
+   does not have ("If a screen needs 'good', it is the absence of a flag" --
+   DESIGN-RULES). On the admin side "success" now reads as ordinary content: the
+   text colour, no tint, the card's own border. The employee's app still shows
+   the green in dark mode; changing what employees see is a separate decision,
+   recorded in the handoff, not something to slip in with this. */
+.app-header--admin ~ .app-main {
+  max-width: 1080px;
+  --success: var(--text);
+  --success-bg: transparent;
+}
+.app-header--admin ~ .app-main .import-result { border-color: var(--border); }
 
 /* ── Login ───────────────────────────────────────────── */
 .login-wrap {
@@ -673,6 +713,11 @@
 }
 .employee-card__chip.warn  { background: var(--warn-bg); color: rgb(var(--warn)); }
 .employee-card__chip.danger { background: var(--danger-bg); color: var(--accent-text); }
+/* On the light theme the words go to ink and the tint carries the meaning: red
+   on its pink measured 3.94:1 and yellow on its cream is lower still, both under
+   the 4.5:1 body-text bar (tools/palette-audit.mjs, 2026-10-07). Dark passes. */
+:root[data-theme="light"] .employee-card__chip.warn,
+:root[data-theme="light"] .employee-card__chip.danger { color: var(--text); }
 
 .employee-card__compliance {
   display: flex;

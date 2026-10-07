@@ -124,7 +124,10 @@
 
   --text: rgb(var(--ink));
   --text-secondary: rgb(var(--ink) / .74);
-  --text-muted: rgb(var(--ink) / .55);
+  /* .70, not .55: measured 3.62:1 on the light page by tools/palette-audit.mjs
+     (2026-10-07), under the 4.5:1 body-text bar. The empty states that showed it
+     had never rendered in an audit before -- the demo seed filled every list. */
+  --text-muted: rgb(var(--ink) / .70);
 
   --border: rgb(14 29 39 / .3);
   --border-light: rgb(14 29 39 / .14);

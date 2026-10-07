@@ -4,78 +4,25 @@ import { ingestPlan } from '../lib/queries.js';
 import InfoIcon from '../components/InfoIcon.jsx';
 
 /**
- * Dev/demo affordance for the Tracker → Cadence plan intake (contract v1).
+ * The roster intake: paste the plan the Tracker's "→ Cadence" button copied, and
+ * applying it adds that employee and their programme here -- or updates them,
+ * if the badge number is already on the roster.
  *
- * In production the Tracker POSTs a plan to the sanctioned backend's ingest
- * endpoint; there is no cross-app networking here. This page lets an admin
- * paste/apply a Plan Payload against the local receiver so the whole intake +
- * expansion flow is exercisable with FICTIONAL test data only.
+ * REAL DATA SINCE 2026-10-07. Cadence-Admin moved inside the suite (owner: "Yes,
+ * move Cadence-Admin inside the suite") and writes to the suite's store, so this
+ * page stopped being the demo affordance it was written as. It used to open with
+ * a fictional sample plan already filled in, a "Reset to sample" button and a
+ * note promising a demo dataset: one click would have put a made-up employee on
+ * the specialist's actual roster. It now starts empty and offers no sample.
  */
-
-// A representative payload with a NEW badge # so applying it creates an account
-// (and returns a temp PIN). Change employee_number to an existing badge to
-// update that employee's program instead.
-const SAMPLE_PLAN = {
-  schema_version: 1,
-  plan_id: 'demo-plan-6001-0001',
-  generated_at: new Date().toISOString(),
-  source: { app: 'hma-tracker', version: 'demo' },
-  employee: {
-    employee_number: '6001',
-    first_name: 'Alex',
-    last_name: 'Nguyen',
-    name: 'Alex Nguyen',
-    company: 'Hendrickson',
-    department: 'Weld',
-    shift: '2nd',
-    location: 'Navarre, OH',
-  },
-  assessment: {
-    assessment_date: new Date().toISOString().slice(0, 10),
-    assessment_type: 'Initial',
-    total_score: 8,
-    follow_up_date: new Date(Date.now() + 42 * 86_400_000).toISOString().slice(0, 10),
-    reassessment_date: new Date(Date.now() + 28 * 86_400_000).toISOString().slice(0, 10),
-    notes: 'Demo intake — fictional data only.',
-  },
-  schedule: { work_days: [1, 2, 3, 4, 5], session_budget_sec: 1200 },
-  exercises: [
-    {
-      source_exercise_id: 's3', name: 'Bridge',
-      instructions: 'On your back, knees bent. Squeeze glutes and lift hips.',
-      movement_category: 'single_leg_dip', exercise_type: 'strength',
-      default_prescription: '3x10-15', prescription_override: null,
-      duration_sec: 258, days: [1, 3, 5], sort_order: 0, image_ref: 'Bridge.webp',
-    },
-    {
-      source_exercise_id: 'sh4', name: 'Wall Slide',
-      instructions: 'Back against a wall, arms in a goalpost, slide overhead.',
-      movement_category: 'shoulder_reach', exercise_type: 'mobility',
-      default_prescription: '2x10', prescription_override: null,
-      duration_sec: 150, days: [1, 2, 3, 4, 5], sort_order: 1, image_ref: null,
-    },
-    {
-      source_exercise_id: 'c2', name: 'Chin Tuck',
-      instructions: 'Draw the chin straight back without tilting. Hold, release.',
-      movement_category: 'cervical_rotation', exercise_type: 'static_stabilization',
-      default_prescription: '2x10 hold 5 sec', prescription_override: null,
-      duration_sec: 110, days: [2, 4], sort_order: 2, image_ref: null,
-    },
-  ],
-};
 
 export default function AdminImportPlan() {
   const navigate = useNavigate();
-  const [text, setText] = useState(() => JSON.stringify(SAMPLE_PLAN, null, 2));
+  const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [errors, setErrors] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
-
-  function loadSample() {
-    setText(JSON.stringify(SAMPLE_PLAN, null, 2));
-    setResult(null); setErrors(null); setError(null);
-  }
 
   async function onApply() {
     setBusy(true); setResult(null); setErrors(null); setError(null);
@@ -105,15 +52,9 @@ export default function AdminImportPlan() {
         Import a Plan
         <InfoIcon
           label="what this screen is for"
-          text="Applies a Tracker plan payload (contract v1) to the local receiver. Test data only."
+          text="Adds the employee and their plan to this roster, or updates them if their badge number is already here. Paste what the Tracker's → Cadence button copied."
         />
       </h1>
-
-      <div className="import-note">
-        In production the Tracker sends this to the sanctioned backend — there’s no live
-        connection here. Applying below writes to the local demo dataset so you can walk
-        the full intake → program → compliance flow.
-      </div>
 
       <textarea
         className="import-editor"
@@ -123,11 +64,14 @@ export default function AdminImportPlan() {
       />
 
       <div className="import-actions">
-        <button className="btn btn-inline" onClick={onApply} disabled={busy}>
+        {/* Rule 5: disabled with its reason, rather than an error after the click. */}
+        <button
+          className="btn btn-inline"
+          onClick={onApply}
+          disabled={busy || !text.trim()}
+          title={text.trim() ? 'Apply this plan to the roster' : 'Paste a plan first'}
+        >
           {busy ? 'Applying…' : 'Apply plan'}
-        </button>
-        <button className="btn btn-secondary btn-inline" onClick={loadSample} disabled={busy}>
-          Reset to sample
         </button>
       </div>
 

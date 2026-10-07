@@ -16,6 +16,10 @@ import bcrypt from 'bcryptjs';
 // the admin build; an empty store in the deployed client build, where five
 // fictional people's health records have no business being (decision A2).
 import { buildSeedDb } from '#seed';
+// The empty shape, whatever `#seed` resolves to: a store adopted from the suite
+// is laid over it, so a key added after that store was written reads as empty
+// rather than crashing the page that indexes into it.
+import { buildSeedDb as buildEmptyDb } from '../localSeed.none.js';
 import { EXERCISE_BY_ID } from '../exerciseLibrary.js';
 import { assertValidPin, PIN_COST } from '../pin.js';
 import {
@@ -25,7 +29,7 @@ import {
   SUPPORTED_SCHEMA_VERSION,
 } from '../planValidation.js';
 
-const STORAGE_KEY = 'hma-cadence:local-db';
+export const STORAGE_KEY = 'hma-cadence:local-db';
 const DAY_MS = 86_400_000;
 
 // ── store load/persist ──────────────────────────────────────────────
@@ -45,13 +49,34 @@ function readStored() {
 
 let store = readStored() ?? buildSeedDb();
 
-function persist(next = store) {
-  store = next;
+// Where a changed store goes. This browser's localStorage by default: the
+// employee's phone, dev and tests. The admin build lives inside the suite since
+// 2026-10-07 and swaps in the suite's store before anything renders -- see
+// ../suiteStore.js.
+let save = (next) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     /* localStorage unavailable (e.g. private mode) — stay in-memory */
   }
+};
+
+function persist(next = store) {
+  store = next;
+  save(store);
+}
+
+/**
+ * Take the store the suite holds, and send every change there from now on.
+ *
+ * `held` null means the suite has nothing yet -- a first visit. The empty store
+ * this module started with is written straight away, so the suite holds the key
+ * (and the backup covers it) before anything has been entered.
+ */
+export function adoptStore(held, saveTo) {
+  save = saveTo;
+  if (held) store = { ...buildEmptyDb(), ...held };
+  else persist();
 }
 
 // Write the (possibly freshly-seeded) store back on first run.
