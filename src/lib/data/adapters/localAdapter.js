@@ -668,6 +668,62 @@ export async function fetchAdminEmployeeDetail(employeeId) {
   };
 }
 
+/**
+ * File the pain in an opened report into this admin's pain queue.
+ *
+ * Until 2026-10-07 the Reports page opened a report and COUNTED its pain ("2
+ * pain reports") but filed nothing, so the pain queue only ever held the demo
+ * seed's -- and the suite's Deliver light, which counts that queue, could never
+ * have lit for a real employee. This is the pipeline plan's phase 6.
+ *
+ * Reports are CUMULATIVE: every send carries the whole history. So an event
+ * already on file -- same person, exercise, day and kind of pain -- is skipped,
+ * resolved or not; pasting the same email twice files nothing the second time,
+ * and a report followed up stays followed up.
+ *
+ * Matched by badge number, from the plan key the report was opened with.
+ * Someone not on the roster cannot be filed against anyone, and that is said
+ * (`onRoster: false`) rather than guessed.
+ */
+export async function fileReturnPain({ employeeNumber, pain = [] } = {}) {
+  const badge = String(employeeNumber ?? '').trim();
+  const emp = badge
+    ? store.employees.find((e) => e.employee_number === badge && e.role === 'employee')
+    : null;
+  if (!emp) return { filed: 0, onRoster: false };
+
+  const program = activeProgramFor(emp.id);
+  const assignments = program
+    ? store.exercise_assignments.filter((a) => a.program_id === program.id)
+    : [];
+  let filed = 0;
+  for (const ev of pain) {
+    if (!ev?.e || !ev?.d || !ev?.c) continue;
+    const onFile = store.pain_reports.some(
+      (p) => p.employee_id === emp.id && p.source_exercise_id === ev.e
+        && p.reported_on === ev.d && p.category === ev.c,
+    );
+    if (onFile) continue;
+    const assignment = assignments.find(
+      (a) => libraryById(a.exercise_library_id)?.source_exercise_id === ev.e,
+    ) ?? null;
+    store.pain_reports.push({
+      id: uid(), employee_id: emp.id,
+      exercise_assignment_id: assignment?.id ?? null,
+      program_id: program?.id ?? null,
+      category: ev.c,
+      // The report says which day, not when in it. Noon UTC keeps the date the
+      // same wherever it is displayed.
+      reported_at: `${ev.d}T12:00:00.000Z`,
+      reported_on: ev.d, source_exercise_id: ev.e, note: ev.n ?? null, source: 'report',
+      acknowledged: false, resolved: false, admin_notes: null, resolved_at: null,
+    });
+    filed += 1;
+  }
+  if (filed) persist();
+  return { filed, onRoster: true };
+}
+
 export async function acknowledgePain(reportId) {
   const p = store.pain_reports.find((r) => r.id === reportId);
   if (!p) throw new Error('Report not found');

@@ -165,15 +165,11 @@
 /* THE ADMIN PAGE, inside the suite since 2026-10-07. As wide as its header, so
    the two keep the inset they always had.
 
-   And no green. The dark theme's --success is #56c15b, which the ATI palette
-   does not have ("If a screen needs 'good', it is the absence of a flag" --
-   DESIGN-RULES). On the admin side "success" now reads as ordinary content: the
-   text colour, no tint, the card's own border. The employee's app still shows
-   the green in dark mode; changing what employees see is a separate decision,
-   recorded in the handoff, not something to slip in with this. */
+   "Success" on the admin side reads as ordinary content: no tint, the card's own
+   border. The green is gone everywhere since the owner's word on 2026-10-07
+   (theme.css); this only takes the tint off the admin's result cards. */
 .app-header--admin ~ .app-main {
   max-width: 1080px;
-  --success: var(--text);
   --success-bg: transparent;
 }
 .app-header--admin ~ .app-main .import-result { border-color: var(--border); }
@@ -507,7 +503,9 @@
 .exercise-card.is-complete .exercise-card__check {
   background: var(--success);
   border-color: var(--success);
-  color: #fff;
+  /* The card's colour, not white: --success is the text colour now, light in the
+     dark theme, and a white tick on it would vanish. */
+  color: var(--bg-card);
 }
 
 .exercise-card__body {

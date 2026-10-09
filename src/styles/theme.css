@@ -93,7 +93,12 @@
      dark hue sitting on a dark ground — --ok is #2e7d32, which reads as almost
      black on navy. Never --accent: --bad and --accent are the same hue today
      and are separate names so one can move without the other. */
-  --success: #56c15b;
+  /* No green (owner, 2026-10-07: "Yes, change them in the employee's phone
+     app"). The ATI palette has none; "good" is the absence of a flag
+     (DESIGN-RULES). Done takes the text colour here; the light theme already
+     showed it in the neutral --ok. The tick inside a completed circle takes
+     the card colour, so it stays visible on either fill (app.css). */
+  --success: var(--text);
   --success-bg: rgb(var(--ok) / .2);
   --warn-bg: rgb(var(--warn) / .2);
   --danger: #ef5a6b;

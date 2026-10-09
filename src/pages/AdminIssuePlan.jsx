@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 
 import { buildPlanQr, PLAN_ECC_LEVEL, MAX_QR_BYTES, PlanQrError } from '../lib/qr/planQr.js';
 import { toKeyIdHex } from '../lib/qr/envelope.js';
-import { recordIssuedPlanKey } from '../lib/queries.js';
+import { ingestPlan, recordIssuedPlanKey } from '../lib/queries.js';
+import { takeHandoffOnce } from '../lib/handoff.js';
 import { renderSheetCodes } from '../lib/sheet/planSheet.js';
 import PlanSheet from '../components/PlanSheet.jsx';
 import { defaultBaseUrl } from '../lib/clientBaseUrl.js';
@@ -38,10 +39,28 @@ export default function AdminIssuePlan() {
   const [error, setError] = useState(null);
   const [tooLarge, setTooLarge] = useState(null);
   const [busy, setBusy] = useState(false);
+  // Who the Tracker handed over, when it did (2026-10-07), and the roster result.
+  const [fromTracker, setFromTracker] = useState(null);
+  const [enrolled, setEnrolled] = useState(null);
+  const [rosterError, setRosterError] = useState(null);
+
+  // A plan handed over by the Tracker's "→ Cadence" lands here, filled in.
+  useEffect(() => {
+    let live = true;
+    takeHandoffOnce().then((payload) => {
+      if (!live || !payload) return;
+      setText(JSON.stringify(payload, null, 2));
+      setFromTracker(displayName(payload.employee) || payload.employee?.employee_number || 'an employee');
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   function reset() {
     setIssued(null); setCodes(null); setSheet(null);
     setErrors(null); setError(null); setTooLarge(null);
+    setEnrolled(null); setRosterError(null);
   }
 
   async function onIssue() {
@@ -92,6 +111,18 @@ export default function AdminIssuePlan() {
       setIssued(result);
       setCodes({ pairImg, planImg });
       setSheet({ payload, codes: sheetCodes, keyIdHex });
+
+      /* ISSUING ENROLS (2026-10-07). The roster used to fill only from the Import
+       * page -- a second paste of the same plan -- and an employee who was issued
+       * codes but never imported could send reports nobody could file against:
+       * their pain would never reach the Pain Queue. Same plan, same moment.
+       * After the codes, so a roster problem never costs a printed sheet. */
+      try {
+        await ingestPlan(payload);
+        setEnrolled(displayName(payload.employee) || payload.employee?.employee_number || 'The employee');
+      } catch (err) {
+        setRosterError(err.message ?? 'Could not add them to the roster.');
+      }
     } catch (err) {
       if (err instanceof PlanQrError && err.code === 'too_large') {
         setTooLarge({ message: err.message, detail: err.detail ?? {} });
@@ -119,6 +150,9 @@ export default function AdminIssuePlan() {
       {/* The scan-order note lives in the title's info icon now (DESIGN-RULES rule 2):
           this screen became part of the suite on 2026-10-07, and it was the one
           paragraph of explanation left on it. */}
+      {fromTracker && (
+        <p className="field-hint" role="status">From the Tracker: {fromTracker}</p>
+      )}
       <label className="field-label" htmlFor="issue-base-url">
         Where the phone lands
         <InfoIcon text="This is inside the QR, so a longer address leaves less room for the plan." />
@@ -149,6 +183,15 @@ export default function AdminIssuePlan() {
       </div>
 
       {error && <div className="login-error" style={{ marginTop: 16 }}>{error}</div>}
+
+      {enrolled && (
+        <p className="field-hint" role="status">{enrolled} is on the roster.</p>
+      )}
+      {rosterError && (
+        <div className="login-error" role="alert" style={{ marginTop: 16 }}>
+          The codes are made, but adding them to the roster failed: {rosterError}
+        </div>
+      )}
 
       {errors && (
         <div className="import-errors">

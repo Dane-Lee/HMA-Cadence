@@ -19,6 +19,7 @@ export const fetchAdminEmployeeDetail = db.fetchAdminEmployeeDetail;
 export const fetchUnresolvedPainReports = db.fetchUnresolvedPainReports;
 export const acknowledgePain          = db.acknowledgePain;
 export const resolvePain              = db.resolvePain;
+export const fileReturnPain           = db.fileReturnPain;
 export const ingestPlan               = db.ingestPlan;
 export const recordIssuedPlanKey      = db.recordIssuedPlanKey;
 export const fetchIssuedPlanKey       = db.fetchIssuedPlanKey;

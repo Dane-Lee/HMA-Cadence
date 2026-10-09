@@ -5,7 +5,7 @@ import {
   summariseReturn,
   RETURN_OUTCOME,
 } from '../lib/return/openReturns.js';
-import { fetchIssuedPlanKey, bindRecognitionKey } from '../lib/queries.js';
+import { fetchIssuedPlanKey, bindRecognitionKey, fileReturnPain } from '../lib/queries.js';
 import InfoIcon from '../components/InfoIcon.jsx';
 
 const OUTCOME_LABEL = {
@@ -41,15 +41,30 @@ function who(issued) {
 export default function AdminReturns() {
   const [text, setText] = useState('');
   const [report, setReport] = useState(null);
+  // What filing each opened report's pain did, by result index (2026-10-07).
+  const [filing, setFiling] = useState({});
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
   async function onOpen() {
     setBusy(true);
     setReport(null);
+    setFiling({});
     setError(null);
     try {
-      setReport(await openPastedReturns(text, { fetchIssuedPlanKey, bindRecognitionKey }));
+      const opened = await openPastedReturns(text, { fetchIssuedPlanKey, bindRecognitionKey });
+      // Every opened report's pain goes into the pain queue -- new events only,
+      // because each report carries the whole history (fileReturnPain).
+      const filed = {};
+      for (const [i, r] of opened.results.entries()) {
+        if (r.outcome !== RETURN_OUTCOME.OPENED) continue;
+        filed[i] = await fileReturnPain({
+          employeeNumber: r.issued?.employeeNumber,
+          pain: r.payload?.pain ?? [],
+        });
+      }
+      setFiling(filed);
+      setReport(opened);
     } catch (err) {
       setError(err.message ?? 'Could not read that.');
     } finally {
@@ -59,15 +74,16 @@ export default function AdminReturns() {
 
   return (
     <>
-      <h1 className="page-title">Progress Reports</h1>
+      <h1 className="page-title">
+        Progress Reports
+        <InfoIcon
+          label="how to paste a report"
+          text="Paste the whole email: headers, quoting and all. Several reports in one forwarded thread is fine, and a repeated block from a reply chain is only counted once. Any pain in them goes to the Pain Queue."
+        />
+      </h1>
       <p className="page-subtitle">
         Paste an employee’s email here. Nothing leaves this machine.
       </p>
-
-      <div className="import-note">
-        Paste the <strong>whole email</strong> — headers, quoting and all. Several reports in one
-        forwarded thread is fine, and a repeated block from a reply chain is only counted once.
-      </div>
 
       <label className="field-label" htmlFor="returns-paste">The email</label>
       <textarea
@@ -136,6 +152,18 @@ export default function AdminReturns() {
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {filing[i] && !filing[i].onRoster && (
+                    <p className="field-hint" role="status">
+                      Not on the roster, so their pain could not be filed. Issue or import their
+                      plan, then open this report again.
+                    </p>
+                  )}
+                  {filing[i]?.filed > 0 && (
+                    <p className="field-hint" role="status">
+                      {filing[i].filed} new in the Pain Queue.
+                    </p>
                   )}
 
                   {OUTCOME_HELP[r.outcome] && (
