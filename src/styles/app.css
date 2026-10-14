@@ -144,6 +144,26 @@
   background: rgba(255,255,255,.35);
 }
 
+/* THE PAIN QUEUE'S LIGHT (AdminShell.jsx, owner 2026-10-14): the home screen's
+   lamp value for value -- HMA-Manual's .status-light, under his lights
+   exception (DESIGN-RULES §0), which he extended to this tab himself. Its blue
+   is the home screen's DARK-theme blue in both themes, because the header it
+   sits on is the brand gradient in both; the light theme's darker blue is
+   judged against white and would sink into the red. test_status_light_colours.py
+   in the suite pins the value. */
+.tab-light {
+  --lamp: 77 163 255;
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-left: 8px;
+  vertical-align: -2px;
+  border-radius: 999px;
+  background: rgb(var(--lamp));
+  border: 1px solid rgb(var(--lamp));
+  box-shadow: 0 0 9px 1px rgb(var(--lamp) / .55);
+}
+
 .app-header__signout {
   color: var(--header-text);
   opacity: .7;

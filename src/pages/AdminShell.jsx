@@ -1,7 +1,36 @@
-import { NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import { asset } from '../lib/asset.js';
 import { clientLogo, clientLogoAlt } from '../lib/branding.js';
+import { STORE_CHANGED } from '../lib/data/adapters/localAdapter.js';
+import { fetchUnresolvedPainReports } from '../lib/queries.js';
+
+/* THE PAIN QUEUE'S LIGHT. The owner, 2026-10-14, on the demo: "we could also
+   have some light in the Pain Queue as well that helps us to connect the dots
+   to the home screen." The home screen's Deliver light is blue for exactly one
+   reason -- pain reports not yet followed up (suite_status.py) -- so the same
+   lamp, in the same blue, sits on the tab that clears it, and goes out with
+   the last report. On the tab and not on each report: every report in that
+   queue is waiting, so a light per report would say nothing. */
+function usePainWaiting() {
+  const { pathname } = useLocation();
+  const [waiting, setWaiting] = useState(0);
+  useEffect(() => {
+    let live = true;
+    const check = () =>
+      fetchUnresolvedPainReports()
+        .then((reports) => { if (live) setWaiting(reports.length); })
+        .catch(() => {});
+    check();
+    window.addEventListener(STORE_CHANGED, check);
+    return () => {
+      live = false;
+      window.removeEventListener(STORE_CHANGED, check);
+    };
+  }, [pathname]);
+  return waiting;
+}
 
 /* INSIDE THE SUITE since 2026-10-07 (owner: "Yes, move Cadence-Admin inside the
    suite"), served at /cadence behind the suite's sign-in -- so this header now
@@ -16,6 +45,8 @@ import { clientLogo, clientLogoAlt } from '../lib/branding.js';
 export default function AdminShell({ children }) {
   const logo = clientLogo();
   const logoAlt = clientLogoAlt();
+  const painWaiting = usePainWaiting();
+  const painLabel = `Ready: ${painWaiting} pain report${painWaiting === 1 ? '' : 's'} to follow up`;
 
   return (
     <>
@@ -64,7 +95,12 @@ export default function AdminShell({ children }) {
           </a>
           <span className="app-header__home-rule" aria-hidden="true" />
           <NavLink to="/admin" end>Employees</NavLink>
-          <NavLink to="/admin/pain">Pain Queue</NavLink>
+          <NavLink to="/admin/pain">
+            Pain Queue
+            {painWaiting > 0 ? (
+              <span className="tab-light" data-status="ready" role="img" aria-label={painLabel} title={painLabel} />
+            ) : null}
+          </NavLink>
           <NavLink to="/admin/issue">Issue</NavLink>
           <NavLink to="/admin/returns">Reports</NavLink>
           <NavLink to="/admin/import">Import</NavLink>

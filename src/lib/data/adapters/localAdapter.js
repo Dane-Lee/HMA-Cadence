@@ -61,9 +61,17 @@ let save = (next) => {
   }
 };
 
+/** Announced on every save, for what shows the store outside the page that
+ *  changed it -- the Pain Queue tab's light, which has to go out the moment a
+ *  report is resolved on the page beneath it. */
+export const STORE_CHANGED = 'hma-cadence:store-changed';
+
 function persist(next = store) {
   store = next;
   save(store);
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    window.dispatchEvent(new Event(STORE_CHANGED));
+  }
 }
 
 /**
@@ -524,12 +532,14 @@ export async function ingestPlan(payload) {
   const libIdFor = (sourceId) =>
     store.exercise_library.find((l) => l.source_exercise_id === sourceId)?.id;
 
-  // 3/4. Idempotent by plan_id: reuse the program row (and drop its old
-  // assignments) if this plan was applied before; otherwise archive the current
-  // active program and create a fresh one. Old exercise_completions that pointed
-  // at replaced assignments are simply ignored by the compliance views.
+  // 3/4. Idempotent by plan_id: reuse the program row if this plan was applied
+  // before; otherwise archive the current active program and create a fresh one.
+  // Completions that pointed at an exercise the plan has since dropped are
+  // simply ignored by the compliance views.
   let program = store.programs.find((p) => p.source_plan_id === plan_id);
+  let previous = [];
   if (program) {
+    previous = store.exercise_assignments.filter((a) => a.program_id === program.id);
     store.exercise_assignments = store.exercise_assignments.filter((a) => a.program_id !== program.id);
   } else {
     for (const p of store.programs) {
@@ -552,12 +562,21 @@ export async function ingestPlan(payload) {
     total_score: assessment.total_score ?? null,
   });
 
-  // 5. Insert the per-employee assignments (with per-weekday schedule).
+  // 5. The per-employee assignments (with per-weekday schedule). An exercise
+  // this plan already had KEEPS ITS ASSIGNMENT -- and so the completions, check-
+  // ins and pain reports that point at it. Re-applying an unchanged plan is
+  // ordinary: since 2026-10-07 issuing enrols, so reprinting a lost sheet does
+  // it. It used to drop and recreate every assignment, which emptied the
+  // employee's week -- their completions pointed at assignments that no longer
+  // existed. The management demo found it on 2026-10-14, when re-issuing Wonder
+  // Woman's codes took her from 60% to 0%.
   for (const ex of exercises) {
+    const libId = libIdFor(ex.source_exercise_id);
+    const kept = previous.find((a) => a.exercise_library_id === libId);
     store.exercise_assignments.push({
-      id: uid(),
+      id: kept ? kept.id : uid(),
       program_id: program.id,
-      exercise_library_id: libIdFor(ex.source_exercise_id),
+      exercise_library_id: libId,
       days: ex.days,
       prescription_override: ex.prescription_override ?? null,
       sort_order: ex.sort_order ?? 0,

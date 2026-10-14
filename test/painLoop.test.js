@@ -20,6 +20,7 @@ import {
   fileReturnPain,
   resetLocalDb,
   resolvePain,
+  STORE_CHANGED,
 } from '../src/lib/data/adapters/localAdapter.js';
 import { HANDOFF_KEY, takeHandoff } from '../src/lib/handoff.js';
 import { trackerIndex } from '../tools/tracker-library.mjs';
@@ -138,5 +139,34 @@ describe('no green', () => {
     const css = readFileSync(`${root}src/styles/app.css`, 'utf8');
     const rule = css.slice(css.indexOf('.exercise-card.is-complete .exercise-card__check {'));
     expect(rule.slice(0, rule.indexOf('}'))).toContain('color: var(--bg-card);');
+  });
+});
+
+describe("the Pain Queue tab's light", () => {
+  // Owner, 2026-10-14: a light "in the Pain Queue as well that helps us to
+  // connect the dots to the home screen". On the tab, out with the last report.
+  it('hears every save, so it goes out when the last report is resolved', async () => {
+    const heard = [];
+    globalThis.window = new EventTarget();
+    window.addEventListener(STORE_CHANGED, () => heard.push(STORE_CHANGED));
+    try {
+      await fileReturnPain({ employeeNumber: '4412', pain: [{ e: 'l1', d: '2026-10-01', c: 'pain_during' }] });
+      const filed = heard.length;
+      expect(filed).toBeGreaterThan(0);
+      const [open] = await fetchUnresolvedPainReports();
+      await resolvePain(open.id);
+      expect(heard.length).toBeGreaterThan(filed);
+    } finally {
+      delete globalThis.window;
+    }
+  });
+
+  it('sits on the Pain Queue tab, and only while a report is waiting', () => {
+    const shell = readFileSync(`${root}src/pages/AdminShell.jsx`, 'utf8');
+    const start = shell.indexOf('<NavLink to="/admin/pain">');
+    const tab = shell.slice(start, shell.indexOf('</NavLink>', start));
+    expect(tab).toContain('painWaiting > 0');
+    expect(tab).toContain('className="tab-light"');
+    expect(tab).toContain('role="img"');
   });
 });

@@ -177,6 +177,37 @@ describe('ingestPlan (Tracker → Cadence, contract v1)', () => {
     expect(program.assignments).toHaveLength(2);
   });
 
+  it("re-applying the same plan keeps each exercise's assignment, so the week survives", async () => {
+    // Issuing enrols (2026-10-07), so reprinting a sheet re-applies the plan.
+    // It used to recreate every assignment and orphan the week's completions.
+    const first = await db.ingestPlan(newHirePlan());
+    const before = await db.fetchActiveProgram(first.employee_id);
+    const ids = before.assignments.map((a) => a.assignmentId).sort();
+    await db.toggleExerciseComplete({
+      employeeId: first.employee_id, programId: first.program_id, assignmentId: ids[0], completed: true,
+    });
+
+    await db.ingestPlan(newHirePlan());
+    const after = await db.fetchActiveProgram(first.employee_id);
+    expect(after.assignments.map((a) => a.assignmentId).sort()).toEqual(ids);
+    const today = await db.fetchTodayCheckIn(first.employee_id, first.program_id);
+    expect(today.completions.map((c) => c.exercise_assignment_id)).toContain(ids[0]);
+  });
+
+  it('a changed plan keeps what it still has and drops what it does not', async () => {
+    const first = await db.ingestPlan(newHirePlan());
+    const before = await db.fetchActiveProgram(first.employee_id);
+    const bridge = before.assignments.find((a) => a.name === 'Bridge').assignmentId;
+    const chinTuck = before.assignments.find((a) => a.name === 'Chin Tuck').assignmentId;
+
+    const plan = newHirePlan();
+    plan.exercises = [plan.exercises[0]]; // the chin tuck comes off
+    await db.ingestPlan(plan);
+    const after = await db.fetchActiveProgram(first.employee_id);
+    expect(after.assignments.map((a) => a.assignmentId)).toEqual([bridge]);
+    expect(after.assignments.map((a) => a.assignmentId)).not.toContain(chinTuck);
+  });
+
   it('updates an existing employee without creating an account or temp PIN', async () => {
     const res = await db.ingestPlan(newHirePlan({ plan_id: 'maria-replan', employee: { employee_number: '4412', name: 'Maria Santos' } }));
     expect(res.created_account).toBe(false);
