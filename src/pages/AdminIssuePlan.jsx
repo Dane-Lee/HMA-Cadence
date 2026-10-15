@@ -21,12 +21,51 @@ function displayName(employee) {
   return joined || null;
 }
 
-async function renderQr(text) {
-  return QRCode.toDataURL(text, {
-    errorCorrectionLevel: PLAN_ECC_LEVEL,
-    margin: 2,
-    scale: 6,
-  });
+/* THE TWO CODES ON SCREEN, ONE SIZE. Owner, 2026-10-15: "I don't like that the
+ * pairing code is 1/3 the size of the Plan code".
+ *
+ * Each is drawn at WHOLE pixels per module and shown at exactly the size it is
+ * drawn, because a browser that has to resample a QR code smears it. Measured
+ * the same day off the screen, with the reader the employee's app scans with
+ * (jsQR): the plan code read at 360px and 480px wide and failed at 320 -- the
+ * size it had always been shown at -- 400 and 440: the sizes that were not
+ * whole pixels per module.
+ *
+ * The plan code sets the size: the whole-pixel scale nearest TARGET_PX, and
+ * never under three pixels a module. The pairing code carries one short key,
+ * so it has far fewer modules, and takes the whole-pixel scale that brings it
+ * closest to the plan code. Larger modules only make it easier to scan. */
+const TARGET_PX = 360;
+const QR_MARGIN = 2;
+
+function modulesAcross(text) {
+  return QRCode.create(text, { errorCorrectionLevel: PLAN_ECC_LEVEL }).modules.size + 2 * QR_MARGIN;
+}
+
+function drawQr(text, scale) {
+  return QRCode.toDataURL(text, { errorCorrectionLevel: PLAN_ECC_LEVEL, margin: QR_MARGIN, scale });
+}
+
+async function renderScreenCodes(pairUrl, planUrl) {
+  const planModules = modulesAcross(planUrl);
+  const planScale = Math.max(3, Math.round(TARGET_PX / planModules));
+  const pairModules = modulesAcross(pairUrl);
+  const pairScale = Math.max(1, Math.round((planModules * planScale) / pairModules));
+  const [pairImg, planImg] = await Promise.all([drawQr(pairUrl, pairScale), drawQr(planUrl, planScale)]);
+  const pairPx = pairModules * pairScale;
+  const planPx = planModules * planScale;
+  // One white tile size for both, with at least TILE_PAD of white around each.
+  return { pairImg, planImg, pairPx, planPx, tilePx: Math.max(pairPx, planPx) + 2 * TILE_PAD };
+}
+
+/* The tile is the same for both codes; the white around each makes up the
+ * difference, so neither code is scaled. Whole pixels, so neither sits on a
+ * half pixel either. (Widths include padding: theme.css is border-box.) */
+const TILE_PAD = 8;
+function tileStyle(px, tilePx) {
+  const near = Math.floor((tilePx - px) / 2);
+  const far = tilePx - px - near;
+  return { width: tilePx, padding: `${near}px ${far}px ${far}px ${near}px` };
 }
 
 export default function AdminIssuePlan() {
@@ -102,14 +141,13 @@ export default function AdminIssuePlan() {
        * wasteful: the screen pair is raster at a fixed pixel size because it is
        * scanned off a monitor, and the sheet's pair is SVG because 110mm on
        * paper has to be a measurement and not a dpi assumption. */
-      const [pairImg, planImg, sheetCodes] = await Promise.all([
-        renderQr(result.pairUrl),
-        renderQr(result.planUrl),
+      const [screenCodes, sheetCodes] = await Promise.all([
+        renderScreenCodes(result.pairUrl, result.planUrl),
         renderSheetCodes(result),
       ]);
 
       setIssued(result);
-      setCodes({ pairImg, planImg });
+      setCodes(screenCodes);
       setSheet({ payload, codes: sheetCodes, keyIdHex });
 
       /* ISSUING ENROLS (2026-10-07). The roster used to fill only from the Import
@@ -223,11 +261,11 @@ export default function AdminIssuePlan() {
 
           <div className="qr-sheet">
             <figure className="qr-sheet__code">
-              <img src={codes.pairImg} alt="Pairing code" />
+              <img src={codes.pairImg} alt="Pairing code" style={tileStyle(codes.pairPx, codes.tilePx)} />
               <figcaption><strong>1. Pairing code</strong><br />Scan this first</figcaption>
             </figure>
-            <figure className="qr-sheet__code qr-sheet__code--plan">
-              <img src={codes.planImg} alt="Plan code" />
+            <figure className="qr-sheet__code">
+              <img src={codes.planImg} alt="Plan code" style={tileStyle(codes.planPx, codes.tilePx)} />
               <figcaption><strong>2. Plan code</strong><br />Scan this second</figcaption>
             </figure>
           </div>

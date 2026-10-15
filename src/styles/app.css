@@ -1202,12 +1202,25 @@
 /* Sized for scanning off a screen. The printed sheet (1f) needs its own rules:
    the plan code is v38-v40, ~110mm square on paper to stay readable, and that
    has to be measured against the real printer rather than guessed here. */
+/* THE TWO CODES: ONE SIZE, ONE HALF EACH. Owner, 2026-10-15: "I don't like
+ * that the pairing code is 1/3 the size of the Plan code ... Can we give them
+ * equally distributed space ... One to the left and one to right?"
+ *
+ * The pairing code comes UP to the plan code's size, never the reverse. It
+ * carries one short key, so it has far fewer modules, and showing it larger
+ * only makes each module easier for a camera to read; shrinking the plan code
+ * is what would cost a scan. The printed sheet keeps its own measured sizes
+ * (lib/sheet/planSheet.js). */
 .qr-sheet {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
-  align-items: flex-start;
+  align-items: start;
+  justify-items: center;
   margin: 20px 0 8px;
+}
+@media (max-width: 720px) {
+  .qr-sheet { grid-template-columns: minmax(0, 1fr); }
 }
 .qr-sheet__code {
   margin: 0;
@@ -1216,7 +1229,8 @@
 }
 .qr-sheet__code img {
   display: block;
-  width: 200px;
+  /* Width and padding are set inline: one tile size for both codes, each code
+     at exactly the size it is drawn (renderScreenCodes in AdminIssuePlan.jsx). */
   max-width: 100%;
   height: auto;
   /* A quiet zone the code needs, and a white ground regardless of theme --
@@ -1225,7 +1239,6 @@
   padding: 8px;
   border-radius: 6px;
 }
-.qr-sheet__code--plan img { width: 320px; }
 .qr-sheet__code figcaption {
   margin-top: 8px;
   font-size: 13px;
