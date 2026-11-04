@@ -8,19 +8,26 @@ import { fetchUnresolvedPainReports } from '../lib/queries.js';
 
 /* THE PAIN QUEUE'S LIGHT. The owner, 2026-10-14, on the demo: "we could also
    have some light in the Pain Queue as well that helps us to connect the dots
-   to the home screen." The home screen's Deliver light is blue for exactly one
-   reason -- pain reports not yet followed up (suite_status.py) -- so the same
-   lamp, in the same blue, sits on the tab that clears it, and goes out with
-   the last report. On the tab and not on each report: every report in that
-   queue is waiting, so a light per report would say nothing. */
+   to the home screen." It is the home screen's HMA Cadence light, on the tab
+   that clears it (suite_status.py), and it goes out with the last report.
+
+   Since 2026-11-03 pain is red (owner: "pain, in general across the board,
+   would be red"): FLASHING while any report has not been acknowledged, STEADY
+   once every one has and some are still not resolved. On the tab and not on
+   each report: every report in that queue is waiting, so a light per report
+   would say nothing -- each card already says "Seen". */
 function usePainWaiting() {
   const { pathname } = useLocation();
-  const [waiting, setWaiting] = useState(0);
+  const [waiting, setWaiting] = useState({ fresh: 0, seen: 0 });
   useEffect(() => {
     let live = true;
     const check = () =>
       fetchUnresolvedPainReports()
-        .then((reports) => { if (live) setWaiting(reports.length); })
+        .then((reports) => {
+          if (!live) return;
+          const fresh = reports.filter((r) => !r.acknowledged).length;
+          setWaiting({ fresh, seen: reports.length - fresh });
+        })
         .catch(() => {});
     check();
     window.addEventListener(STORE_CHANGED, check);
@@ -45,8 +52,13 @@ function usePainWaiting() {
 export default function AdminShell({ children }) {
   const logo = clientLogo();
   const logoAlt = clientLogoAlt();
-  const painWaiting = usePainWaiting();
-  const painLabel = `Ready: ${painWaiting} pain report${painWaiting === 1 ? '' : 's'} to follow up`;
+  const { fresh, seen } = usePainWaiting();
+  const painStatus = fresh ? 'alert' : seen ? 'pain' : null;
+  const painLabel = [
+    fresh ? `${fresh} new pain report${fresh === 1 ? '' : 's'}, not yet acknowledged` : '',
+    seen ? `${seen} pain report${seen === 1 ? '' : 's'} acknowledged, not resolved` : '',
+  ].filter(Boolean).join(' · ');
+  const painText = `${fresh ? 'Flashing Red' : 'Red'}: ${painLabel}`;
 
   return (
     <>
@@ -97,8 +109,8 @@ export default function AdminShell({ children }) {
           <NavLink to="/admin" end>Employees</NavLink>
           <NavLink to="/admin/pain">
             Pain Queue
-            {painWaiting > 0 ? (
-              <span className="tab-light" data-status="ready" role="img" aria-label={painLabel} title={painLabel} />
+            {painStatus ? (
+              <span className="tab-light" data-status={painStatus} role="img" aria-label={painText} title={painText} />
             ) : null}
           </NavLink>
           <NavLink to="/admin/issue">Issue</NavLink>

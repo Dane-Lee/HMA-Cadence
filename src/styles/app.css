@@ -151,8 +151,13 @@
    sits on is the brand gradient in both; the light theme's darker blue is
    judged against white and would sink into the red. test_status_light_colours.py
    in the suite pins the value. */
+/* The suite's red (HMA-Manual index.css, --light-pain, dark pair: the tab sits
+   on the brand gradient either way). A white bezel, because the gradient is
+   red too. Flashing is slow -- one every 1.6s, far under three a second -- and
+   a steady ring under reduced motion. test_status_light_colours.py holds the
+   value to the suite's. */
 .tab-light {
-  --lamp: 77 163 255;
+  --lamp: 255 64 84;
   display: inline-block;
   width: 15px;
   height: 15px;
@@ -161,7 +166,12 @@
   border-radius: 999px;
   background: rgb(var(--lamp));
   border: 1px solid rgb(var(--lamp));
-  box-shadow: 0 0 9px 1px rgb(var(--lamp) / .55);
+  box-shadow: 0 0 0 2px #141414, 0 0 0 4px rgb(255 255 255 / .92), 0 0 9px 1px rgb(var(--lamp) / .55);
+}
+.tab-light[data-status="alert"] { animation: tab-light-flash 1.6s ease-in-out infinite; }
+@keyframes tab-light-flash { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) {
+  .tab-light[data-status="alert"] { animation: none; outline: 2px solid #fff; outline-offset: 3px; }
 }
 
 .app-header__signout {

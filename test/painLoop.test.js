@@ -165,7 +165,10 @@ describe("the Pain Queue tab's light", () => {
     const shell = readFileSync(`${root}src/pages/AdminShell.jsx`, 'utf8');
     const start = shell.indexOf('<NavLink to="/admin/pain">');
     const tab = shell.slice(start, shell.indexOf('</NavLink>', start));
-    expect(tab).toContain('painWaiting > 0');
+    // Red since 2026-11-03: flashing while any is unacknowledged, steady after.
+    expect(tab).toContain('painStatus ?');
+    expect(tab).toContain('data-status={painStatus}');
+    expect(shell).toContain("const painStatus = fresh ? 'alert' : seen ? 'pain' : null;");
     expect(tab).toContain('className="tab-light"');
     expect(tab).toContain('role="img"');
   });
