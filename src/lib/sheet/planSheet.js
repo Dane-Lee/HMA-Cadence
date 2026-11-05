@@ -106,26 +106,6 @@ export function daysLabel(days) {
 }
 
 /**
- * The plain exercise list, which is the sheet's backup for a scan that never
- * works (decision E2).
- *
- * `prescription_override` wins over `default_prescription` because the override
- * is the practitioner's decision for this employee, and printing the default
- * next to a code that carries the override would put two different answers in
- * front of the same person.
- */
-export function sheetExercises(payload) {
-  const exercises = Array.isArray(payload?.exercises) ? [...payload.exercises] : [];
-  exercises.sort((a, b) => (a?.sort_order ?? 0) - (b?.sort_order ?? 0));
-  return exercises.map((exercise) => ({
-    id: exercise?.source_exercise_id ?? null,
-    name: exercise?.name ?? 'Exercise',
-    prescription: exercise?.prescription_override || exercise?.default_prescription || '',
-    days: daysLabel(exercise?.days),
-  }));
-}
-
-/**
  * The numbered steps, in the order the employee performs them.
  *
  * **Pairing first, plan second** -- that is the smooth path, and it is what the

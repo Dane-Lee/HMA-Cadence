@@ -74,14 +74,13 @@ describe('the sheet as it reaches the printer', () => {
     expect(html).toContain('4412');
   });
 
-  it('prints every exercise in the plan as the scan-failed backup', async () => {
+  it('leaves the exercise list off -- the codes carry the program (owner, 2026-11-05)', async () => {
     const { html, payload } = await renderSheet();
 
     for (const exercise of payload.exercises) {
-      expect(html).toContain(exercise.name);
+      expect(html).not.toContain(exercise.name);
     }
-    expect(html).toContain('2x10 each side'); // the override, not the default
-    expect(html).not.toContain('3x10 each side');
+    expect(html).not.toContain('2x10 each side');
   });
 
   it('numbers the codes so the order survives being looked at, not read', async () => {

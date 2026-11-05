@@ -1,7 +1,6 @@
 import {
   SHEET_STEPS,
   WRONG_ORDER_NOTE,
-  sheetExercises,
   PLAN_CODE_MM,
   PAIR_CODE_MM,
   MIN_MODULE_MM,
@@ -45,7 +44,6 @@ function Code({ svg, widthMm, ordinal, label, hint }) {
 export default function PlanSheet({ payload, codes, issued, keyIdHex }) {
   const employee = payload?.employee ?? null;
   const name = displayName(employee);
-  const exercises = sheetExercises(payload);
 
   return (
     <section className="plan-sheet" aria-label="Printable exercise sheet">
@@ -86,29 +84,10 @@ export default function PlanSheet({ payload, codes, issued, keyIdHex }) {
 
       <p className="plan-sheet__note">{WRONG_ORDER_NOTE}</p>
 
-      {exercises.length > 0 && (
-        <div className="plan-sheet__list">
-          <h3>Your Exercises</h3>
-          <p className="plan-sheet__hint">
-            The same list your phone will show. If the codes will not scan, this is still
-            everything you need.
-          </p>
-          <table>
-            <thead>
-              <tr><th>Exercise</th><th>How much</th><th>Days</th></tr>
-            </thead>
-            <tbody>
-              {exercises.map((exercise, index) => (
-                <tr key={`${exercise.id ?? 'x'}-${index}`}>
-                  <td>{exercise.name}</td>
-                  <td>{exercise.prescription || '—'}</td>
-                  <td>{exercise.days}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* No exercise list since 2026-11-05 (owner: "I don't think we need the
+          exercise information included in the print out for Cadence. That
+          doesn't make any sense anymore."). The codes carry the program, and
+          the Tracker prints the full one (decision E2, as amended). */}
 
       {/* Printed small, for the person issuing it rather than the employee. The
           module size is here so that a code which will not scan at the printer

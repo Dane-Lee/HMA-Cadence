@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { buildPlanQr } from '../src/lib/qr/planQr.js';
 import {
   renderSheetCodes,
-  sheetExercises,
   daysLabel,
   qrModuleCount,
   moduleSizeMm,
@@ -154,40 +153,11 @@ describe('the printed sheet: what it tells the employee', () => {
   });
 });
 
-describe('the printed sheet: the backup exercise list', () => {
-  it('prints the override rather than the default when the practitioner set one', () => {
-    const rows = sheetExercises(samplePlan());
-    const reverseLunge = rows.find((row) => row.name === 'Reverse Lunge');
-
-    expect(reverseLunge.prescription).toBe('2x10 each side');
-    expect(reverseLunge.prescription).not.toBe('3x10 each side');
-  });
-
-  it('prints in the plan order, not the payload order', () => {
-    const payload = samplePlan();
-    payload.exercises = [...payload.exercises].reverse();
-
-    const rows = sheetExercises(payload);
-
-    expect(rows.map((row) => row.id)).toEqual(
-      [...samplePlan().exercises]
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map((exercise) => exercise.source_exercise_id),
-    );
-  });
-
+describe('the days, named', () => {
   it('names the days rather than printing raw numbers', () => {
     expect(daysLabel([1, 3, 5])).toBe('Mon, Wed, Fri');
     expect(daysLabel([0, 1, 2, 3, 4, 5, 6])).toBe('Every day');
     expect(daysLabel([])).toBe('As scheduled');
     expect(daysLabel(undefined)).toBe('As scheduled');
-  });
-
-  it('survives an exercise with nothing prescribed', () => {
-    const payload = samplePlan();
-    payload.exercises[0].default_prescription = null;
-    payload.exercises[0].prescription_override = null;
-
-    expect(sheetExercises(payload)[0].prescription).toBe('');
   });
 });

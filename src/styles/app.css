@@ -1379,21 +1379,6 @@
   font-size: 13px;
 }
 
-.plan-sheet__list { margin-top: 6mm; }
-.plan-sheet__list h3 { margin: 0 0 2px; font-size: 15px; }
-.plan-sheet__list table {
-  width: 100%;
-  margin-top: 3mm;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-.plan-sheet__list th,
-.plan-sheet__list td {
-  padding: 4px 6px;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
-  vertical-align: top;
-}
 .plan-sheet__foot {
   margin-top: 6mm;
   padding-top: 3mm;
@@ -1424,5 +1409,4 @@
   }
   /* A code split across a page break is an unscannable code. */
   .plan-sheet__codes, .plan-sheet__code { break-inside: avoid; page-break-inside: avoid; }
-  .plan-sheet__list tr { break-inside: avoid; page-break-inside: avoid; }
 }
