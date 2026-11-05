@@ -1274,6 +1274,24 @@
 .field-label { display: block; margin: 16px 0 6px; font-weight: 600; font-size: 14px; }
 .field-hint { margin: 6px 0 0; font-size: 13px; color: var(--text-muted); }
 
+/* A plan arrived from the Tracker's "→ Cadence" (AdminIssuePlan). A callout, so
+   the brand's callout pair: white on PMS 294, marked in PMS 1375 (DESIGN-RULES
+   §0) -- the same in both themes, 12.9:1. It replaced a 13px muted hint the owner
+   could not read and did not read as "her program showed up" (2026-11-05). */
+.handoff-banner {
+  display: flex; align-items: center; gap: 14px;
+  margin: 16px 0 22px; padding: 14px 18px;
+  background: #002f6c; color: #fff;
+  border-left: 6px solid #ff9e1b; border-radius: var(--radius-md);
+}
+.handoff-banner__mark {
+  flex: none; display: grid; place-items: center;
+  width: 32px; height: 32px; border-radius: 999px;
+  background: #ff9e1b; color: #002f6c; font-weight: 700; font-size: 18px;
+}
+.handoff-banner__title { display: block; font-size: 19px; font-weight: 700; line-height: 1.25; }
+.handoff-banner__from { display: block; margin-top: 2px; font-size: 14px; color: rgb(255 255 255 / .82); }
+
 /* ---- Progress reports (the return paste box) ---------------------------- */
 .returns-list { list-style: none; margin: 12px 0 0; padding: 0; }
 .returns-item {

@@ -188,8 +188,17 @@ export default function AdminIssuePlan() {
       {/* The scan-order note lives in the title's info icon now (DESIGN-RULES rule 2):
           this screen became part of the suite on 2026-10-07, and it was the one
           paragraph of explanation left on it. */}
+      {/* Owner, 2026-11-05: the old muted "From the Tracker: Wonder Woman" line
+          "is not intuitively understood as 'Oh, her program showed up'", and dark
+          on dark was hard to read. Now it says it, as a callout (app.css). */}
       {fromTracker && (
-        <p className="field-hint" role="status">From the Tracker: {fromTracker}</p>
+        <div className="handoff-banner" role="status">
+          <span className="handoff-banner__mark" aria-hidden="true">✓</span>
+          <span>
+            <strong className="handoff-banner__title">{fromTracker}’s Program Has Arrived</strong>
+            <span className="handoff-banner__from">From the HMA Tracker</span>
+          </span>
+        </div>
       )}
       <label className="field-label" htmlFor="issue-base-url">
         Where the phone lands
