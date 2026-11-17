@@ -39,7 +39,8 @@ function makeSharedStorage() {
       (location.protocol === 'http:' || location.protocol === 'https:') &&
       /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   } catch (e) {}
-  /* v3, same day: the offline bar keeps the timing it had in v1, now that the
+  /* v3, same day (the bar itself is gone since v5 -- see goOffline; the console
+     line keeps this timing): the offline bar keeps the timing it had in v1, now that the
      requests that used to raise it are gone. From a file the request failed
      outright, so the bar appeared on opening; on Vercel the GET came back a
      plain 404, so only a failed SAVE raised it. Anyone just looking at the
@@ -92,6 +93,13 @@ function makeSharedStorage() {
     try { localStorage.removeItem(key); } catch (e) {}
   }
 
+  /* v5, 2026-11-17: NOTHING ON SCREEN. Until then this also pinned a bar to the
+     bottom of the page: "Offline: saving to this browser only. Start the
+     HMA-Manual server to share records." Owner: "please remove [it]. I hate when
+     you decide to include things like that which I never asked for and clearly
+     isn't needed." Nothing is lost without it: a change the store did not get is
+     marked UNSENT and sent first when the store next answers (v4). The console
+     line stays, for whoever is debugging. */
   function goOffline() {
     if (warned) return;
     warned = true;
@@ -100,15 +108,6 @@ function makeSharedStorage() {
       'Changes saved now are not visible to the other app until the ' +
       'HMA-Manual server is running and they are saved again.'
     );
-    try {
-      var bar = document.createElement('div');
-      bar.textContent =
-        'Offline: saving to this browser only. Start the HMA-Manual server to share records.';
-      bar.style.cssText =
-        'position:fixed;bottom:0;left:0;right:0;z-index:99999;padding:6px 12px;' +
-        'background:#8a6d3b;color:#fff;font:13px system-ui,sans-serif;text-align:center';
-      if (document.body) document.body.appendChild(bar);
-    } catch (e) {}
   }
 
   return {
