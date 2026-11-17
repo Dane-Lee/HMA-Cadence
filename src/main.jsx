@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { AuthProvider } from './lib/auth.jsx';
+import ScrollToTop, { startPagesAtTop } from './components/ScrollToTop.jsx';
 import { captureQrFragment } from './lib/qr/fragment.js';
 import './styles/theme.css';
 
@@ -17,6 +18,8 @@ function render() {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <BrowserRouter basename={basename}>
+        {/* Admin only: every Cadence-Admin screen opens at the top (owner, 2026-11-17). */}
+        {__ADMIN_BUILD__ ? <ScrollToTop /> : null}
         <AuthProvider>
           <App />
         </AuthProvider>
@@ -31,6 +34,7 @@ function render() {
 // branch is dead code and the import is never resolved, so the employee's app
 // does not contain the suite's store at all (test/clientBuild.test.js).
 if (__ADMIN_BUILD__) {
+  startPagesAtTop();
   import('./lib/data/suiteStore.js')
     .then(({ hydrateFromSuite }) => hydrateFromSuite())
     .then(render, (error) => {
